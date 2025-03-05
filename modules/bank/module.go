@@ -3,12 +3,12 @@ package bank
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 
-	"github.com/forbole/bdjuno/v3/database"
-	"github.com/forbole/bdjuno/v3/modules/bank/source"
+	"github.com/forbole/callisto/v4/database"
+	"github.com/forbole/callisto/v4/modules/bank/source"
 
-	junomessages "github.com/forbole/juno/v3/modules/messages"
+	junomessages "github.com/forbole/juno/v6/modules/messages"
 
-	"github.com/forbole/juno/v3/modules"
+	"github.com/forbole/juno/v6/modules"
 )
 
 var (

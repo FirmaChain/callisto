@@ -2,13 +2,13 @@ package actions
 
 import (
 	"github.com/cosmos/cosmos-sdk/simapp/params"
-	"github.com/forbole/juno/v3/modules"
-	"github.com/forbole/juno/v3/node"
-	"github.com/forbole/juno/v3/node/builder"
-	nodeconfig "github.com/forbole/juno/v3/node/config"
-	"github.com/forbole/juno/v3/types/config"
+	"github.com/forbole/juno/v6/modules"
+	"github.com/forbole/juno/v6/node"
+	"github.com/forbole/juno/v6/node/builder"
+	nodeconfig "github.com/forbole/juno/v6/node/config"
+	"github.com/forbole/juno/v6/types/config"
 
-	modulestypes "github.com/forbole/bdjuno/v3/modules/types"
+	modulestypes "github.com/forbole/callisto/v4/modules/types"
 )
 
 const (

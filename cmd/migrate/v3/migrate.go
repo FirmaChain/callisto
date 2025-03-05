@@ -4,14 +4,14 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/forbole/bdjuno/v3/modules/actions"
+	"github.com/forbole/callisto/v4/modules/actions"
 
-	parsecmdtypes "github.com/forbole/juno/v3/cmd/parse/types"
+	parsecmdtypes "github.com/forbole/juno/v6/cmd/parse/types"
 
 	"gopkg.in/yaml.v3"
 
-	junov3 "github.com/forbole/juno/v3/cmd/migrate/v3"
-	"github.com/forbole/juno/v3/types/config"
+	"github.com/forbole/juno/v6 /types/config"
+	junov3 "github.com/forbole/juno/v6/cmd/migrate/v3"
 )
 
 // RunMigration runs the migrations from v2 to v3

@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 
-	parsecmdtypes "github.com/forbole/juno/v3/cmd/parse/types"
-	"github.com/forbole/juno/v3/types/config"
+	parsecmdtypes "github.com/forbole/juno/v6/cmd/parse/types"
+	"github.com/forbole/juno/v6/types/config"
 	"github.com/spf13/cobra"
 
-	"github.com/forbole/bdjuno/v3/database"
-	authutils "github.com/forbole/bdjuno/v3/modules/auth"
-	"github.com/forbole/bdjuno/v3/utils"
+	"github.com/forbole/callisto/v4/database"
+	authutils "github.com/forbole/callisto/v4/modules/auth"
+	"github.com/forbole/callisto/v4/utils"
 )
 
 // vestingCmd returns a Cobra command that allows to fix the vesting data for the accounts
@@ -38,7 +38,7 @@ func vestingCmd(parseConfig *parsecmdtypes.Config) *cobra.Command {
 				return fmt.Errorf("error unmarshalling genesis doc: %s", err)
 			}
 
-			vestingAccounts, err := authutils.GetGenesisVestingAccounts(appState, parseCtx.EncodingConfig.Marshaler)
+			vestingAccounts, err := authutils.GetGenesisVestingAccounts(appState, utils.GetCodec())
 			if err != nil {
 				return fmt.Errorf("error while gestting vesting accounts: %s", err)
 			}

@@ -1,25 +1,25 @@
-module github.com/forbole/bdjuno/v3
+module github.com/forbole/callisto/v4
 
-go 1.18
+go 1.21
 
 require (
-	github.com/CosmWasm/wasmd v0.29.2
-	github.com/cosmos/cosmos-sdk v0.45.9
-	github.com/cosmos/gaia/v7 v7.1.0
-	github.com/firmachain/firmachain v0.3.5-patch
-	github.com/forbole/juno/v3 v3.4.0
-	github.com/go-co-op/gocron v1.16.1
+	github.com/CosmWasm/wasmd v0.54.0
+	github.com/cosmos/cosmos-sdk v0.50.12
+	github.com/cosmos/gaia/v7 v7.1.1
+	github.com/firmachain/firmachain v0.4.0
+	github.com/forbole/juno/v6 v6.0.1
+	github.com/go-co-op/gocron v1.37.0
 	github.com/gogo/protobuf v1.3.3
-	github.com/jmoiron/sqlx v1.3.5
-	github.com/lib/pq v1.10.6
+	github.com/jmoiron/sqlx v1.4.0
+	github.com/lib/pq v1.10.9
 	github.com/pelletier/go-toml v1.9.5
-	github.com/prometheus/client_golang v1.13.0
-	github.com/proullon/ramsql v0.0.0-20181213202341-817cee58a244
-	github.com/rs/zerolog v1.27.0
-	github.com/spf13/cobra v1.5.0
-	github.com/stretchr/testify v1.8.0
-	github.com/tendermint/tendermint v0.34.21
-	google.golang.org/grpc v1.50.1
+	github.com/prometheus/client_golang v1.21.1
+	github.com/proullon/ramsql v0.1.3
+	github.com/rs/zerolog v1.32.0
+	github.com/spf13/cobra v1.9.1
+	github.com/stretchr/testify v1.10.0
+	github.com/cometbft/cometbft v0.38.17
+	google.golang.org/grpc v1.63.2
 	gopkg.in/yaml.v3 v3.0.1
 )
 

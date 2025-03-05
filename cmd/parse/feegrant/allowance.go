@@ -4,15 +4,15 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	parsecmdtypes "github.com/forbole/juno/v3/cmd/parse/types"
-	"github.com/forbole/juno/v3/types/config"
+	parsecmdtypes "github.com/forbole/juno/v6/cmd/parse/types"
+	"github.com/forbole/juno/v6/types/config"
 
-	"github.com/forbole/bdjuno/v3/modules/feegrant"
-	"github.com/forbole/bdjuno/v3/utils"
+	"github.com/forbole/callisto/v4/modules/feegrant"
+	"github.com/forbole/callisto/v4/utils"
 
 	"github.com/spf13/cobra"
 
-	"github.com/forbole/bdjuno/v3/database"
+	"github.com/forbole/callisto/v4/database"
 
 	"sort"
 
