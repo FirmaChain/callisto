@@ -3,16 +3,16 @@ package consensus
 import (
 	"fmt"
 
-	"github.com/forbole/juno/v6/types"
+	juno "github.com/forbole/juno/v6/types"
 
 	"github.com/rs/zerolog/log"
 
-	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
+	tmctypes "github.com/cometbft/cometbft/rpc/core/types"
 )
 
 // HandleBlock implements modules.Module
 func (m *Module) HandleBlock(
-	b *tmctypes.ResultBlock, _ *tmctypes.ResultBlockResults, _ []*types.Tx, _ *tmctypes.ResultValidators,
+	b *tmctypes.ResultBlock, _ *tmctypes.ResultBlockResults, _ []*juno.Transaction, _ *tmctypes.ResultValidators,
 ) error {
 	err := m.updateBlockTimeFromGenesis(b)
 	if err != nil {

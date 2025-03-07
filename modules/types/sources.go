@@ -2,12 +2,9 @@ package types
 
 import (
 	"fmt"
-	"os"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
-	"github.com/tendermint/tendermint/libs/log"
-
-	"github.com/cosmos/cosmos-sdk/simapp/params"
+	"cosmossdk.io/core/codec"
+	"github.com/forbole/callisto/v4/utils/simapp"
 	"github.com/forbole/juno/v6/node/remote"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -17,8 +14,10 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
 	"github.com/forbole/juno/v6/node/local"
 
+	localdistrsource "github.com/forbole/callisto/v4/modules/distribution/source/local"
 	nodeconfig "github.com/forbole/juno/v6/node/config"
 
 	banksource "github.com/forbole/callisto/v4/modules/bank/source"
@@ -50,28 +49,25 @@ type Sources struct {
 	StakingSource  stakingsource.Source
 }
 
-func BuildSources(nodeCfg nodeconfig.Config, encodingConfig *params.EncodingConfig) (*Sources, error) {
+func BuildSources(nodeCfg nodeconfig.Config, cdc codec.Codec) (*Sources, error) {
 	switch cfg := nodeCfg.Details.(type) {
 	case *remote.Details:
 		return buildRemoteSources(cfg)
 	case *local.Details:
-		return buildLocalSources(cfg, encodingConfig)
+		return buildLocalSources(cfg, cdc)
 
 	default:
 		return nil, fmt.Errorf("invalid configuration type: %T", cfg)
 	}
 }
 
-func buildLocalSources(cfg *local.Details, encodingConfig *params.EncodingConfig) (*Sources, error) {
-	source, err := local.NewSource(cfg.Home, encodingConfig)
+func buildLocalSources(cfg *local.Details, cdc codec.Codec) (*Sources, error) {
+	source, err := local.NewSource(cfg.Home, cdc)
 	if err != nil {
 		return nil, err
 	}
 
-	app := simapp.NewSimApp(
-		log.NewTMLogger(log.NewSyncWriter(os.Stdout)), source.StoreDB, nil, true, map[int64]bool{},
-		cfg.Home, 0, simapp.MakeTestEncodingConfig(), simapp.EmptyAppOptions{},
-	)
+	app := simapp.NewSimApp(cdc)
 
 	sources := &Sources{
 		BankSource:     localbanksource.NewSource(source, banktypes.QueryServer(app.BankKeeper)),

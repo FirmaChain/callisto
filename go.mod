@@ -19,7 +19,7 @@ require (
 	github.com/spf13/cobra v1.9.1
 	github.com/stretchr/testify v1.10.0
 	github.com/cometbft/cometbft v0.38.17
-	google.golang.org/grpc v1.63.2
+	google.golang.org/grpc v1.71.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -193,5 +193,4 @@ require (
 replace (
 	github.com/forbole/juno/v3 => github.com/firmachain/juno/v3 v3.4.6
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-	google.golang.org/grpc => google.golang.org/grpc v1.33.2
 )

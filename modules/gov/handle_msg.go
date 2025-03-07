@@ -6,34 +6,65 @@ import (
 	"strconv"
 
 	"github.com/forbole/callisto/v4/types"
+	"github.com/forbole/callisto/v4/utils"
+	eventutils "github.com/forbole/callisto/v4/utils/events"
+	"github.com/rs/zerolog/log"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	juno "github.com/forbole/juno/v6/types"
 )
 
+var msgFilter = map[string]bool{
+	"/cosmos.gov.v1.MsgSubmitProposal": true,
+	"/cosmos.gov.v1.MsgDeposit":        true,
+	"/cosmos.gov.v1.MsgVote":           true,
+
+	"/cosmos.gov.v1beta1.MsgSubmitProposal": true,
+	"/cosmos.gov.v1beta1.MsgDeposit":        true,
+	"/cosmos.gov.v1beta1.MsgVote":           true,
+}
+
+// HandleMsgExec implements modules.AuthzMessageModule
+func (m *Module) HandleMsgExec(index int, _ int, executedMsg juno.Message, tx *juno.Transaction) error {
+	return m.HandleMsg(index, executedMsg, tx)
+}
+
 // HandleMsg implements modules.MessageModule
-func (m *Module) HandleMsg(index int, msg sdk.Msg, tx *juno.Tx) error {
-	if len(tx.Logs) == 0 {
+func (m *Module) HandleMsg(index int, msg juno.Message, tx *juno.Transaction) error {
+	if _, ok := msgFilter[msg.GetType()]; !ok {
 		return nil
 	}
 
-	switch cosmosMsg := msg.(type) {
-	case *govtypes.MsgSubmitProposal:
-		return m.handleMsgSubmitProposal(tx, index, cosmosMsg)
+	log.Debug().Str("module", "gov").Str("hash", tx.TxHash).Uint64("height", tx.Height).Msg(fmt.Sprintf("handling gov message %s", msg.GetType()))
 
-	case *govtypes.MsgDeposit:
-		return m.handleMsgDeposit(tx, cosmosMsg)
+	switch msg.GetType() {
+	case "/cosmos.gov.v1.MsgSubmitProposal":
+		cosmosMsg := utils.UnpackMessage(m.cdc, msg.GetBytes(), &govtypesv1.MsgSubmitProposal{})
+		return m.handleSubmitProposalEvent(tx, cosmosMsg.Proposer, eventutils.FindEventsByMsgIndex(sdk.StringifyEvents(tx.Events), index))
+	case "/cosmos.gov.v1beta1.MsgSubmitProposal":
+		cosmosMsg := utils.UnpackMessage(m.cdc, msg.GetBytes(), &govtypesv1beta1.MsgSubmitProposal{})
+		return m.handleSubmitProposalEvent(tx, cosmosMsg.Proposer, eventutils.FindEventsByMsgIndex(sdk.StringifyEvents(tx.Events), index))
 
-	case *govtypes.MsgVote:
-		return m.handleMsgVote(tx, cosmosMsg)
+	case "/cosmos.gov.v1.MsgDeposit":
+		cosmosMsg := utils.UnpackMessage(m.cdc, msg.GetBytes(), &govtypesv1.MsgDeposit{})
+		return m.handleDepositEvent(tx, cosmosMsg.Depositor, eventutils.FindEventsByMsgIndex(sdk.StringifyEvents(tx.Events), index))
+	case "/cosmos.gov.v1beta1.MsgDeposit":
+		cosmosMsg := utils.UnpackMessage(m.cdc, msg.GetBytes(), &govtypesv1beta1.MsgDeposit{})
+		return m.handleDepositEvent(tx, cosmosMsg.Depositor, eventutils.FindEventsByMsgIndex(sdk.StringifyEvents(tx.Events), index))
+
+	case "/cosmos.gov.v1.MsgVote":
+		cosmosMsg := utils.UnpackMessage(m.cdc, msg.GetBytes(), &govtypesv1.MsgVote{})
+		return m.handleVoteEvent(tx, cosmosMsg.Voter, eventutils.FindEventsByMsgIndex(sdk.StringifyEvents(tx.Events), index))
+	case "/cosmos.gov.v1beta1.MsgVote":
+		cosmosMsg := utils.UnpackMessage(m.cdc, msg.GetBytes(), &govtypesv1beta1.MsgVote{})
+		return m.handleVoteEvent(tx, cosmosMsg.Voter, eventutils.FindEventsByMsgIndex(sdk.StringifyEvents(tx.Events), index))
 	}
 
 	return nil
 }
 
 // handleMsgSubmitProposal allows to properly handle a handleMsgSubmitProposal
-func (m *Module) handleMsgSubmitProposal(tx *juno.Tx, index int, msg *govtypes.MsgSubmitProposal) error {
+func (m *Module) handleMsgSubmitProposal(tx *juno.Transaction, index int, msg *govtypes.MsgSubmitProposal) error {
 	// Get the proposal id
 	event, err := tx.FindEventByType(index, govtypes.EventTypeSubmitProposal)
 	if err != nil {
@@ -51,7 +82,7 @@ func (m *Module) handleMsgSubmitProposal(tx *juno.Tx, index int, msg *govtypes.M
 	}
 
 	// Get the proposal
-	proposal, err := m.source.Proposal(tx.Height, proposalID)
+	proposal, err := m.source.Proposal(int64(tx.Height), proposalID)
 	if err != nil {
 		return fmt.Errorf("error while getting proposal: %s", err)
 	}
@@ -82,24 +113,24 @@ func (m *Module) handleMsgSubmitProposal(tx *juno.Tx, index int, msg *govtypes.M
 	}
 
 	// Store the deposit
-	deposit := types.NewDeposit(proposal.ProposalId, msg.Proposer, msg.InitialDeposit, tx.Height)
+	deposit := types.NewDeposit(proposal.ProposalId, msg.Proposer, msg.InitialDeposit, int64(tx.Height))
 	return m.db.SaveDeposits([]types.Deposit{deposit})
 }
 
 // handleMsgDeposit allows to properly handle a handleMsgDeposit
 func (m *Module) handleMsgDeposit(tx *juno.Tx, msg *govtypes.MsgDeposit) error {
-	deposit, err := m.source.ProposalDeposit(tx.Height, msg.ProposalId, msg.Depositor)
+	deposit, err := m.source.ProposalDeposit(int64(tx.Height), msg.ProposalId, msg.Depositor)
 	if err != nil {
 		return fmt.Errorf("error while getting proposal deposit: %s", err)
 	}
 
 	return m.db.SaveDeposits([]types.Deposit{
-		types.NewDeposit(msg.ProposalId, msg.Depositor, deposit.Amount, tx.Height),
+		types.NewDeposit(msg.ProposalId, msg.Depositor, deposit.Amount, int64(tx.Height)),
 	})
 }
 
 // handleMsgVote allows to properly handle a handleMsgVote
 func (m *Module) handleMsgVote(tx *juno.Tx, msg *govtypes.MsgVote) error {
-	vote := types.NewVote(msg.ProposalId, msg.Voter, msg.Option, tx.Height)
+	vote := types.NewVote(msg.ProposalId, msg.Voter, msg.Option, int64(tx.Height))
 	return m.db.SaveVote(vote)
 }

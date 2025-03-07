@@ -6,13 +6,12 @@ import (
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/gogo/protobuf/proto"
-
-	"github.com/forbole/callisto/v4/types"
-
-	dbtypes "github.com/forbole/callisto/v4/database/types"
+	"github.com/emicklei/proto"
 
 	"github.com/lib/pq"
+
+	dbtypes "github.com/forbole/callisto/v4/database/types"
+	"github.com/forbole/callisto/v4/types"
 )
 
 // SaveGovParams saves the given x/gov parameters inside the database
@@ -125,7 +124,7 @@ INSERT INTO proposal(
 			return fmt.Errorf("error while wrapping proposal proto content: %s", err)
 		}
 
-		contentBz, err := db.EncodingConfig.Marshaler.MarshalJSON(anyContent)
+		contentBz, err := db.cdc.Marshaler.MarshalJSON(anyContent)
 		if err != nil {
 			return fmt.Errorf("error while marshaling proposal content: %s", err)
 		}
@@ -178,13 +177,13 @@ func (db *Db) GetProposal(id uint64) (*types.Proposal, error) {
 	row := rows[0]
 
 	var contentAny codectypes.Any
-	err = db.EncodingConfig.Marshaler.UnmarshalJSON([]byte(row.Content), &contentAny)
+	err = db.cdc.Marshaler.UnmarshalJSON([]byte(row.Content), &contentAny)
 	if err != nil {
 		return nil, err
 	}
 
 	var content govtypes.Content
-	err = db.EncodingConfig.Marshaler.UnpackAny(&contentAny, &content)
+	err = db.cdc.Marshaler.UnpackAny(&contentAny, &content)
 	if err != nil {
 		return nil, err
 	}

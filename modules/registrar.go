@@ -7,15 +7,16 @@ import (
 	"github.com/forbole/juno/v6/modules/pruning"
 	"github.com/forbole/juno/v6/modules/telemetry"
 
+	messagetype "github.com/forbole/callisto/v4/modules/message_type"
 	"github.com/forbole/callisto/v4/modules/slashing"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	jmodules "github.com/forbole/juno/v6/modules"
 	"github.com/forbole/juno/v6/modules/messages"
 	"github.com/forbole/juno/v6/modules/registrar"
+	juno "github.com/forbole/juno/v6/types"
 
-	"github.com/forbole/callisto/v4/4/utils"
+	"github.com/forbole/callisto/v4/utils"
 
 	"github.com/forbole/callisto/v4/database"
 	"github.com/forbole/callisto/v4/modules/auth"
@@ -33,8 +34,8 @@ import (
 
 // UniqueAddressesParser returns a wrapper around the given parser that removes all duplicated addresses
 func UniqueAddressesParser(parser messages.MessageAddressesParser) messages.MessageAddressesParser {
-	return func(cdc codec.Codec, msg sdk.Msg) ([]string, error) {
-		addresses, err := parser(cdc, msg)
+	return func(tx *juno.Transaction) ([]string, error) {
+		addresses, err := parser(tx)
 		if err != nil {
 			return nil, err
 		}
@@ -52,38 +53,41 @@ var (
 // Registrar represents the modules.Registrar that allows to register all modules that are supported by BigDipper
 type Registrar struct {
 	parser messages.MessageAddressesParser
+	cdc    codec.Codec
 }
 
 // NewRegistrar allows to build a new Registrar instance
-func NewRegistrar(parser messages.MessageAddressesParser) *Registrar {
+func NewRegistrar(parser messages.MessageAddressesParser, cdc codec.Codec) *Registrar {
 	return &Registrar{
 		parser: UniqueAddressesParser(parser),
+		cdc:    cdc,
 	}
 }
 
 // BuildModules implements modules.Registrar
 func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
-	cdc := ctx.EncodingConfig.Marshaler
+	cdc := r.cdc.Marshaler
 	db := database.Cast(ctx.Database)
 
-	sources, err := types.BuildSources(ctx.JunoConfig.Node, ctx.EncodingConfig)
+	sources, err := types.BuildSources(ctx.JunoConfig.Node, r.cdc)
 	if err != nil {
 		panic(err)
 	}
 
-	actionsModule := actions.NewModule(ctx.JunoConfig, ctx.EncodingConfig)
-	authModule := auth.NewModule(r.parser, cdc, db)
-	bankModule := bank.NewModule(r.parser, sources.BankSource, cdc, db)
+	actionsModule := actions.NewModule(ctx.JunoConfig, r.cdc, sources)
+	authModule := auth.NewModule(r.parser, r.cdc, db)
+	bankModule := bank.NewModule(r.parser, sources.BankSource, r.cdc, db)
 	consensusModule := consensus.NewModule(db)
-	distrModule := distribution.NewModule(sources.DistrSource, cdc, db)
-	feegrantModule := feegrant.NewModule(cdc, db)
-	mintModule := mint.NewModule(sources.MintSource, cdc, db)
-	slashingModule := slashing.NewModule(sources.SlashingSource, cdc, db)
-	stakingModule := staking.NewModule(sources.StakingSource, slashingModule, cdc, db)
-	govModule := gov.NewModule(sources.GovSource, authModule, distrModule, mintModule, slashingModule, stakingModule, cdc, db)
+	distrModule := distribution.NewModule(sources.DistrSource, r.cdc, db)
+	feegrantModule := feegrant.NewModule(r.cdc, db)
+	messagetypeModule := messagetype.NewModule(r.parser, cdc, db)
+	mintModule := mint.NewModule(sources.MintSource, r.cdc, db)
+	slashingModule := slashing.NewModule(sources.SlashingSource, r.cdc, db)
+	stakingModule := staking.NewModule(sources.StakingSource, slashingModule, r.cdc, db)
+	govModule := gov.NewModule(sources.GovSource, authModule, distrModule, mintModule, slashingModule, stakingModule, r.cdc, db)
 
 	return []jmodules.Module{
-		messages.NewModule(r.parser, cdc, ctx.Database),
+		messages.NewModule(r.parser, ctx.Database),
 		telemetry.NewModule(ctx.JunoConfig),
 		pruning.NewModule(ctx.JunoConfig, db, ctx.Logger),
 
@@ -95,8 +99,9 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		feegrantModule,
 		govModule,
 		mintModule,
+		messagetypeModule,
 		modules.NewModule(ctx.JunoConfig.Chain, db),
-		pricefeed.NewModule(ctx.JunoConfig, cdc, db),
+		pricefeed.NewModule(ctx.JunoConfig, r.cdc, db),
 		slashingModule,
 		stakingModule,
 	}

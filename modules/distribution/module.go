@@ -15,6 +15,7 @@ var (
 	_ modules.GenesisModule            = &Module{}
 	_ modules.PeriodicOperationsModule = &Module{}
 	_ modules.MessageModule            = &Module{}
+	_ modules.AuthzMessageModule       = &Module{}
 )
 
 // Module represents the x/distr module

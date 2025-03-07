@@ -10,8 +10,8 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/forbole/juno/v6 /types/config"
 	junov3 "github.com/forbole/juno/v6/cmd/migrate/v3"
+	"github.com/forbole/juno/v6/types/config"
 )
 
 // RunMigration runs the migrations from v2 to v3

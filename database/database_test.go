@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/math"
 	dbconfig "github.com/forbole/juno/v6/database/config"
 	"github.com/forbole/juno/v6/logging"
 
@@ -19,12 +20,11 @@ import (
 
 	juno "github.com/forbole/juno/v6/types"
 
+	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
+	tmctypes "github.com/cometbft/cometbft/rpc/core/types"
+	tmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	tmversion "github.com/tendermint/tendermint/proto/tendermint/version"
-	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
-	tmtypes "github.com/tendermint/tendermint/types"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
 	"github.com/stretchr/testify/suite"
 
 	_ "github.com/proullon/ramsql/driver"
@@ -41,8 +41,6 @@ type DbTestSuite struct {
 }
 
 func (suite *DbTestSuite) SetupTest() {
-	// Create the codec
-	codec := simapp.MakeTestEncodingConfig()
 
 	// Build the database
 	dbCfg := dbconfig.NewDatabaseConfig(
@@ -58,9 +56,9 @@ func (suite *DbTestSuite) SetupTest() {
 		100000,
 		100,
 	)
-	db, err := database.Builder(junodb.NewContext(dbCfg, &codec, logging.DefaultLogger()))
-	suite.Require().NoError(err)
 
+	db, err := database.Builder(utils.GetCodec())(junodb.NewContext(dbCfg, logging.DefaultLogger()))
+	suite.Require().NoError(err)
 	bigDipperDb, ok := (db).(*database.Db)
 	suite.Require().True(ok)
 
@@ -143,8 +141,8 @@ func (suite *DbTestSuite) getBlock(height int64) *juno.Block {
 func (suite *DbTestSuite) getValidator(consAddr, valAddr, pubkey string) types.Validator {
 	selfDelegation := suite.getAccount("cosmos1z4hfrxvlgl4s8u4n5ngjcw8kdqrcv43599amxs")
 
-	maxRate := sdk.NewDec(10)
-	maxChangeRate := sdk.NewDec(20)
+	maxRate := math.LegacyNewDec(10)
+	maxChangeRate := math.LegacyNewDec(20)
 
 	validator := types.NewValidator(
 		consAddr,

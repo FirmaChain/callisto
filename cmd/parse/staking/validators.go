@@ -11,6 +11,7 @@ import (
 
 	"github.com/forbole/callisto/v4/database"
 	"github.com/forbole/callisto/v4/modules/staking"
+	"github.com/forbole/callisto/v4/utils"
 )
 
 // validatorsCmd returns a Cobra command that allows to fix the validator infos for all validators.
@@ -24,7 +25,8 @@ func validatorsCmd(parseConfig *parsecmdtypes.Config) *cobra.Command {
 				return err
 			}
 
-			sources, err := modulestypes.BuildSources(config.Cfg.Node, parseCtx.EncodingConfig)
+			cdc := utils.GetCodec()
+			sources, err := modulestypes.BuildSources(config.Cfg.Node, cdc)
 			if err != nil {
 				return err
 			}
@@ -33,7 +35,7 @@ func validatorsCmd(parseConfig *parsecmdtypes.Config) *cobra.Command {
 			db := database.Cast(parseCtx.Database)
 
 			// Build the staking module
-			stakingModule := staking.NewModule(sources.StakingSource, nil, parseCtx.EncodingConfig.Marshaler, db)
+			stakingModule := staking.NewModule(sources.StakingSource, nil, cdc, db)
 
 			// Get latest height
 			height, err := parseCtx.Node.LatestHeight()
