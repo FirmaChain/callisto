@@ -3,7 +3,7 @@ package types
 import (
 	"fmt"
 
-	"cosmossdk.io/core/codec"
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/forbole/callisto/v4/utils/simapp"
 	"github.com/forbole/juno/v6/node/remote"
 
@@ -17,7 +17,6 @@ import (
 
 	"github.com/forbole/juno/v6/node/local"
 
-	localdistrsource "github.com/forbole/callisto/v4/modules/distribution/source/local"
 	nodeconfig "github.com/forbole/juno/v6/node/config"
 
 	banksource "github.com/forbole/callisto/v4/modules/bank/source"

@@ -3,6 +3,7 @@ package types
 import (
 	"time"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
@@ -48,9 +49,9 @@ type GovParams struct {
 
 // TallyParams contains the tally parameters of the x/gov module
 type TallyParams struct {
-	Quorum        sdk.Dec `json:"quorum,omitempty"`
-	Threshold     sdk.Dec `json:"threshold,omitempty"`
-	VetoThreshold sdk.Dec `json:"veto_threshold,omitempty" yaml:"veto_threshold"`
+	Quorum        math.LegacyDec `json:"quorum,omitempty"`
+	Threshold     math.LegacyDec `json:"threshold,omitempty"`
+	VetoThreshold math.LegacyDec `json:"veto_threshold,omitempty" yaml:"veto_threshold"`
 }
 
 // NewTallyParams allows to build a new TallyParams instance
