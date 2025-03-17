@@ -25,16 +25,20 @@ func (db *Db) GetLastBlock() (*dbtypes.BlockRow, error) {
 	return &blocks[0], nil
 }
 
-// GetLastBlockHeight returns the last block height stored inside the database
-func (db *Db) GetLastBlockHeight() (int64, error) {
-	block, err := db.GetLastBlock()
-	if err != nil {
-		return 0, err
+// GetLastBlockHeight returns the last block height and timestamp stored inside the database
+func (db *Db) GetLastBlockHeightAndTimestamp() (dbtypes.BlockHeightAndTimestamp, error) {
+	stmt := `SELECT height, timestamp FROM block ORDER BY height DESC LIMIT 1`
+
+	var blockHeightAndTimestamp []dbtypes.BlockHeightAndTimestamp
+	if err := db.Sqlx.Select(&blockHeightAndTimestamp, stmt); err != nil {
+		return dbtypes.BlockHeightAndTimestamp{}, fmt.Errorf("cannot get last block height and timestamp from db: %s", err)
 	}
-	if block == nil {
-		return 0, fmt.Errorf("block table is empty")
+
+	if len(blockHeightAndTimestamp) == 0 {
+		return dbtypes.BlockHeightAndTimestamp{}, nil
 	}
-	return block.Height, nil
+
+	return blockHeightAndTimestamp[0], nil
 }
 
 // -------------------------------------------------------------------------------------------------------------------

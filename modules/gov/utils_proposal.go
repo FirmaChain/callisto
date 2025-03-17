@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	tmctypes "github.com/cometbft/cometbft/rpc/core/types"
+	cmttypes "github.com/cometbft/cometbft/rpc/core/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	proposaltypes "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
@@ -53,7 +53,7 @@ func (m *Module) UpdateProposal(height int64, id uint64) error {
 	return nil
 }
 
-func (m *Module) UpdateProposalSnapshots(height int64, blockVals *tmctypes.ResultValidators, id uint64) error {
+func (m *Module) UpdateProposalSnapshots(height int64, blockVals *cmttypes.ResultValidators, id uint64) error {
 	err := m.updateProposalStakingPoolSnapshot(height, id)
 	if err != nil {
 		return fmt.Errorf("error while updating proposal staking pool snapshot: %s", err)
@@ -215,7 +215,7 @@ func (m *Module) updateProposalStakingPoolSnapshot(height int64, proposalID uint
 // updateProposalValidatorStatusesSnapshot updates the snapshots of the various validators for
 // the proposal having the given id
 func (m *Module) updateProposalValidatorStatusesSnapshot(
-	height int64, proposalID uint64, blockVals *tmctypes.ResultValidators,
+	height int64, proposalID uint64, blockVals *cmttypes.ResultValidators,
 ) error {
 	validators, _, err := m.stakingModule.GetValidatorsWithStatus(height, stakingtypes.Bonded.String())
 	if err != nil {

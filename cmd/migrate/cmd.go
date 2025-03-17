@@ -14,8 +14,8 @@ type Migrator func(parseCfg *parsecmdtypes.Config) error
 
 var (
 	migrations = map[string]Migrator{
-		"v2": v2.RunMigration,
 		"v3": v3.RunMigration,
+		//TODO: Add v6?
 	}
 )
 

@@ -6,12 +6,12 @@ import (
 
 	"github.com/forbole/callisto/v4/types"
 
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmtypes "github.com/cometbft/cometbft/types"
 	"github.com/rs/zerolog/log"
 )
 
 // HandleGenesis implements modules.Module
-func (m *Module) HandleGenesis(doc *tmtypes.GenesisDoc, _ map[string]json.RawMessage) error {
+func (m *Module) HandleGenesis(doc *cmtypes.GenesisDoc, _ map[string]json.RawMessage) error {
 	log.Debug().Str("module", "consensus").Msg("parsing genesis")
 
 	// Save the genesis time

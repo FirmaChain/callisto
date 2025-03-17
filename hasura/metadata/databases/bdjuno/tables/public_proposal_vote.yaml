@@ -18,6 +18,7 @@ select_permissions:
     - proposal_id
     - voter_address
     - option
+    - weight
     - height
     filter: {}
   role: anonymous

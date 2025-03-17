@@ -26,8 +26,8 @@ func (m *Module) HandleMsgExec(index int, _ int, executedMsg juno.Message, tx *j
 }
 
 // HandleMsg implements modules.MessageModule
-func (m *Module) HandleMsg(_ int, msg juno.Message, tx *juno.Trasaction) error {
-	addresses, err := m.messagesParser(m.cdc, msg)
+func (m *Module) HandleMsg(_ int, msg juno.Message, tx *juno.Transaction) error {
+	addresses, err := m.messagesParser(tx)
 	if err != nil {
 		log.Error().Str("module", "auth").Err(err).
 			Str("operation", "refresh account").
@@ -76,6 +76,7 @@ func (m *Module) handleMsgCreateVestingAccount(msg *vestingtypes.MsgCreateVestin
 	if err != nil {
 		return fmt.Errorf("error while new base vesting account: %s", err)
 	}
+
 	err = m.db.StoreBaseVestingAccountFromMsg(bva, txTimestamp)
 	if err != nil {
 		return fmt.Errorf("error while storing base vesting account from msg %s", err)

@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 	"fmt"
 
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmtypes "github.com/cometbft/cometbft/types"
 
 	"github.com/rs/zerolog/log"
 )
 
 // HandleGenesis implements modules.GenesisModule
-func (m *Module) HandleGenesis(_ *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
+func (m *Module) HandleGenesis(_ *cmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
 	log.Debug().Str("module", "auth").Msg("parsing genesis")
 
 	accounts, err := GetGenesisAccounts(appState, m.cdc)

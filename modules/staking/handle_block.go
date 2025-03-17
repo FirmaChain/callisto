@@ -9,32 +9,23 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	juno "github.com/forbole/juno/v6/types"
 
-	tmctypes "github.com/cometbft/cometbft/rpc/core/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/rpc/core/types"
+	cmtypes "github.com/cometbft/cometbft/types"
 	"github.com/rs/zerolog/log"
 )
 
 // HandleBlock implements BlockModule
 func (m *Module) HandleBlock(
-	block *tmctypes.ResultBlock, res *tmctypes.ResultBlockResults, _ []*juno.Transaction, vals *tmctypes.ResultValidators,
+	block *cmttypes.ResultBlock, res *cmttypes.ResultBlockResults, _ []*juno.Transaction, vals *cmttypes.ResultValidators,
 ) error {
 	// Update the validators
-	validators, err := m.updateValidators(block.Block.Height)
+	_, err := m.updateValidators(block.Block.Height)
 	if err != nil {
 		return fmt.Errorf("error while updating validators: %s", err)
 	}
 
-	// Update the voting powers
-	go m.updateValidatorVotingPower(block.Block.Height, vals)
-
-	// Update the validators statuses
-	go m.updateValidatorsStatus(block.Block.Height, validators)
-
 	// Updated the double sign evidences
 	go m.updateDoubleSignEvidence(block.Block.Height, block.Block.Evidence.Evidence)
-
-	// Update the staking pool
-	go m.updateStakingPool(block.Block.Height)
 
 	return nil
 }
@@ -61,7 +52,7 @@ func (m *Module) updateValidatorsStatus(height int64, validators []stakingtypes.
 }
 
 // updateValidatorVotingPower fetches and stores into the database all the current validators' voting powers
-func (m *Module) updateValidatorVotingPower(height int64, vals *tmctypes.ResultValidators) {
+func (m *Module) updateValidatorVotingPower(height int64, vals *cmttypes.ResultValidators) {
 	log.Debug().Str("module", "staking").Int64("height", height).
 		Msg("updating validators voting powers")
 
@@ -82,17 +73,18 @@ func (m *Module) updateValidatorVotingPower(height int64, vals *tmctypes.ResultV
 }
 
 // updateDoubleSignEvidence updates the double sign evidence of all validators
-func (m *Module) updateDoubleSignEvidence(height int64, evidenceList tmtypes.EvidenceList) {
+func (m *Module) updateDoubleSignEvidence(height int64, evidenceList cmtypes.EvidenceList) {
 	log.Debug().Str("module", "staking").Int64("height", height).
 		Msg("updating double sign evidence")
 
+	var evidences []types.DoubleSignEvidence
 	for _, ev := range evidenceList {
-		dve, ok := ev.(*tmtypes.DuplicateVoteEvidence)
+		dve, ok := ev.(*cmtypes.DuplicateVoteEvidence)
 		if !ok {
 			continue
 		}
 
-		evidence := types.NewDoubleSignEvidence(
+		evidences = append(evidences, types.NewDoubleSignEvidence(
 			height,
 			types.NewDoubleSignVote(
 				int(dve.VoteA.Type),
@@ -112,15 +104,15 @@ func (m *Module) updateDoubleSignEvidence(height int64, evidenceList tmtypes.Evi
 				dve.VoteB.ValidatorIndex,
 				hex.EncodeToString(dve.VoteB.Signature),
 			),
+		),
 		)
+	}
 
-		err := m.db.SaveDoubleSignEvidence(evidence)
-		if err != nil {
-			log.Error().Str("module", "staking").Err(err).Int64("height", height).
-				Msg("error while saving double sign evidence")
-			return
-		}
-
+	err := m.db.SaveDoubleSignEvidences(evidences)
+	if err != nil {
+		log.Error().Str("module", "staking").Err(err).Int64("height", height).
+			Msg("error while saving double sign evidence")
+		return
 	}
 }
 

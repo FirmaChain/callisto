@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmtypes "github.com/cometbft/cometbft/types"
 
 	"github.com/forbole/callisto/v4/types"
 
@@ -13,7 +13,7 @@ import (
 )
 
 // HandleGenesis implements modules.Module
-func (m *Module) HandleGenesis(doc *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
+func (m *Module) HandleGenesis(doc *cmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
 	log.Debug().Str("module", "mint").Msg("parsing genesis")
 
 	// Read the genesis state

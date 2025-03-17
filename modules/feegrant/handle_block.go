@@ -8,7 +8,7 @@ import (
 	feegranttypes "cosmossdk.io/x/feegrant"
 	juno "github.com/forbole/juno/v6/types"
 
-	tmctypes "github.com/cometbft/cometbft/rpc/core/types"
+	cmttypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/rs/zerolog/log"
 
 	"github.com/forbole/callisto/v4/types"
@@ -16,7 +16,7 @@ import (
 
 // HandleBlock implements BlockModule
 func (m *Module) HandleBlock(
-	block *tmctypes.ResultBlock, res *tmctypes.ResultBlockResults, _ []*juno.Transaction, _ *tmctypes.ResultValidators,
+	block *cmttypes.ResultBlock, res *cmttypes.ResultBlockResults, _ []*juno.Transaction, _ *cmttypes.ResultValidators,
 ) error {
 
 	// Remove expired fee grant allowances

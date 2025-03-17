@@ -7,12 +7,12 @@ import (
 
 	"github.com/rs/zerolog/log"
 
-	tmctypes "github.com/cometbft/cometbft/rpc/core/types"
+	cmttypes "github.com/cometbft/cometbft/rpc/core/types"
 )
 
 // HandleBlock implements modules.Module
 func (m *Module) HandleBlock(
-	b *tmctypes.ResultBlock, _ *tmctypes.ResultBlockResults, _ []*juno.Transaction, _ *tmctypes.ResultValidators,
+	b *cmttypes.ResultBlock, _ *cmttypes.ResultBlockResults, _ []*juno.Transaction, _ *cmttypes.ResultValidators,
 ) error {
 	err := m.updateBlockTimeFromGenesis(b)
 	if err != nil {
@@ -24,7 +24,7 @@ func (m *Module) HandleBlock(
 }
 
 // updateBlockTimeFromGenesis insert average block time from genesis
-func (m *Module) updateBlockTimeFromGenesis(block *tmctypes.ResultBlock) error {
+func (m *Module) updateBlockTimeFromGenesis(block *cmttypes.ResultBlock) error {
 	log.Trace().Str("module", "consensus").Int64("height", block.Block.Height).
 		Msg("updating block time from genesis")
 
@@ -34,11 +34,6 @@ func (m *Module) updateBlockTimeFromGenesis(block *tmctypes.ResultBlock) error {
 	}
 	if genesis == nil {
 		return fmt.Errorf("genesis table is empty")
-	}
-
-	// Skip if the genesis does not exist
-	if genesis == nil {
-		return nil
 	}
 
 	newBlockTime := block.Block.Time.Sub(genesis.Time).Seconds() / float64(block.Block.Height-genesis.InitialHeight)

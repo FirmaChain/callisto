@@ -1,7 +1,7 @@
 package database_test
 
 import (
-	"io/ioutil"
+	"os"
 	"path"
 	"path/filepath"
 	"regexp"
@@ -22,8 +22,8 @@ import (
 	juno "github.com/forbole/juno/v6/types"
 
 	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
-	tmctypes "github.com/cometbft/cometbft/rpc/core/types"
-	tmtypes "github.com/cometbft/cometbft/types"
+	cmttypes "github.com/cometbft/cometbft/rpc/core/types"
+	cmtypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/stretchr/testify/suite"
@@ -70,11 +70,11 @@ func (suite *DbTestSuite) SetupTest() {
 	suite.Require().NoError(err)
 
 	dirPath := path.Join(".", "schema")
-	dir, err := ioutil.ReadDir(dirPath)
+	dir, err := os.ReadDir(dirPath)
 	suite.Require().NoError(err)
 
 	for _, fileInfo := range dir {
-		file, err := ioutil.ReadFile(filepath.Join(dirPath, fileInfo.Name()))
+		file, err := os.ReadFile(filepath.Join(dirPath, fileInfo.Name()))
 		suite.Require().NoError(err)
 
 		commentsRegExp := regexp.MustCompile(`/\*.*\*/`)
@@ -99,15 +99,15 @@ func (suite *DbTestSuite) getBlock(height int64) *juno.Block {
 	addr, err := sdk.ConsAddressFromBech32(validator.GetConsAddr())
 	suite.Require().NoError(err)
 
-	tmBlock := &tmctypes.ResultBlock{
-		BlockID: tmtypes.BlockID{},
-		Block: &tmtypes.Block{
-			Header: tmtypes.Header{
+	tmBlock := &cmttypes.ResultBlock{
+		BlockID: cmtypes.BlockID{},
+		Block: &cmtypes.Block{
+			Header: cmtypes.Header{
 				Version:            tmversion.Consensus{},
 				ChainID:            "",
 				Height:             height,
 				Time:               time.Now(),
-				LastBlockID:        tmtypes.BlockID{},
+				LastBlockID:        cmtypes.BlockID{},
 				LastCommitHash:     nil,
 				DataHash:           nil,
 				ValidatorsHash:     []byte("hash"),
@@ -116,14 +116,14 @@ func (suite *DbTestSuite) getBlock(height int64) *juno.Block {
 				AppHash:            nil,
 				LastResultsHash:    nil,
 				EvidenceHash:       nil,
-				ProposerAddress:    tmtypes.Address(addr.Bytes()),
+				ProposerAddress:    cmtypes.Address(addr.Bytes()),
 			},
-			Data:     tmtypes.Data{},
-			Evidence: tmtypes.EvidenceData{},
-			LastCommit: &tmtypes.Commit{
+			Data:     cmtypes.Data{},
+			Evidence: cmtypes.EvidenceData{},
+			LastCommit: &cmtypes.Commit{
 				Height:     height - 1,
 				Round:      1,
-				BlockID:    tmtypes.BlockID{},
+				BlockID:    cmtypes.BlockID{},
 				Signatures: nil,
 			},
 		},

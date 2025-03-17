@@ -8,14 +8,14 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	juno "github.com/forbole/juno/v6/types"
 
-	tmctypes "github.com/cometbft/cometbft/rpc/core/types"
+	cmttypes "github.com/cometbft/cometbft/rpc/core/types"
 
 	"github.com/rs/zerolog/log"
 )
 
 // HandleBlock implements modules.BlockModule
 func (m *Module) HandleBlock(
-	b *tmctypes.ResultBlock, blockResults *tmctypes.ResultBlockResults, txs []*juno.Transaction, vals *tmctypes.ResultValidators,
+	b *cmttypes.ResultBlock, blockResults *cmttypes.ResultBlockResults, txs []*juno.Transaction, vals *cmttypes.ResultValidators,
 ) error {
 	txEvents := collectTxEvents(txs)
 	err := m.updateProposalsStatus(b.Block.Height, txEvents, blockResults.FinalizeBlockEvents)

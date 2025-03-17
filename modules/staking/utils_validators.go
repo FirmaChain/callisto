@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	cmttypes "github.com/cometbft/cometbft/rpc/core/types"
 	"google.golang.org/grpc/codes"
 
 	"github.com/forbole/callisto/v4/modules/staking/keybase"
 	"github.com/forbole/callisto/v4/types"
+	juno "github.com/forbole/juno/v6/types"
 
 	"github.com/rs/zerolog/log"
 
@@ -204,6 +206,39 @@ func (m *Module) GetValidatorsStatuses(height int64, validators []stakingtypes.V
 	return statuses, nil
 }
 
+func (m *Module) GetValidatorsVotingPowers(height int64, vals *cmttypes.ResultValidators) ([]types.ValidatorVotingPower, error) {
+	stakingVals, _, err := m.getValidators(height)
+	if err != nil {
+		return nil, err
+	}
+
+	votingPowers := make([]types.ValidatorVotingPower, len(stakingVals))
+	for index, validator := range stakingVals {
+		// Get the validator consensus address
+		consAddr, err := validator.GetConsAddr()
+		if err != nil {
+			return nil, err
+		}
+
+		// Find the voting power of this validator
+		var votingPower int64 = 0
+		for _, blockVal := range vals.Validators {
+			blockValConsAddr := juno.ConvertValidatorAddressToBech32String(blockVal.Address)
+			if blockValConsAddr == string(consAddr) {
+				votingPower = blockVal.VotingPower
+			}
+		}
+
+		if found, _ := m.db.HasValidator(string(consAddr)); !found {
+			continue
+		}
+
+		votingPowers[index] = types.NewValidatorVotingPower(string(consAddr), votingPower, height)
+	}
+
+	return votingPowers, nil
+}
+
 // UpdateValidatorStatuses allows to update validators status, voting power
 // and active proposals validator status snapshots
 func (m *Module) UpdateValidatorStatuses() error {
@@ -291,7 +326,6 @@ func (m *Module) updateValidatorStatusAndVP(height int64, validators []stakingty
 			return err
 		}
 
-		valSigningInfo, err := m.slashingModule.GetSigningInfo(height, consAddr)
 		if err != nil && !strings.Contains(err.Error(), codes.NotFound.String()) {
 			return fmt.Errorf("error while getting validator signing info: %s", err)
 		}
@@ -302,7 +336,6 @@ func (m *Module) updateValidatorStatusAndVP(height int64, validators []stakingty
 			consPubKey.String(),
 			int(validator.GetStatus()),
 			validator.IsJailed(),
-			valSigningInfo.Tombstoned,
 			height,
 		)
 	}

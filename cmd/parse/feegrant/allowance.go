@@ -16,7 +16,7 @@ import (
 
 	"sort"
 
-	tmctypes "github.com/cometbft/cometbft/rpc/core/types"
+	cmttypes "github.com/cometbft/cometbft/rpc/core/types"
 
 	feegranttypes "cosmossdk.io/x/feegrant"
 	"github.com/rs/zerolog/log"
@@ -41,7 +41,7 @@ func allowanceCmd(parseConfig *parsecmdtypes.Config) *cobra.Command {
 
 			// Get the accounts
 			// Collect all the transactions
-			var txs []*tmctypes.ResultTx
+			var txs []*cmttypes.ResultTx
 
 			// Get all the MsgGrantAllowance txs
 			query := fmt.Sprintf("message.action='%s'", feegranttypes.EventTypeSetFeeGrant)

@@ -1,7 +1,7 @@
 package database_test
 
 import (
-	tmtypes "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmtypes "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	"github.com/forbole/callisto/v4/types"
 
@@ -246,7 +246,7 @@ VALUES ('cosmosvalcons1qqqqrezrl53hujmpdch6d805ac75n220ku09rl',
 func (suite *DbTestSuite) TestGetValidators() {
 	suite.getAccount("cosmos1z4hfrxvlgl4s8u4n5ngjcw8kdqrcv43599amxs")
 	suite.getAccount("cosmos184ma3twcfjqef6k95ne8w2hk80x2kah7vcwy4a")
-	// Inser the test data
+	// Insert the test data
 	queries := []string{
 		`INSERT INTO validator (consensus_address, consensus_pubkey) VALUES ('cosmosvalcons1qqqqrezrl53hujmpdch6d805ac75n220ku09rl', 'cosmosvalconspub1zcjduepq7mft6gfls57a0a42d7uhx656cckhfvtrlmw744jv4q0mvlv0dypskehfk8')`,
 		`INSERT INTO validator (consensus_address, consensus_pubkey) VALUES ('cosmosvalcons1qq92t2l4jz5pt67tmts8ptl4p0jhr6utx5xa8y', 'cosmosvalconspub1zcjduepqe93asg05nlnj30ej2pe3r8rkeryyuflhtfw3clqjphxn4j3u27msrr63nk')`,
@@ -633,14 +633,12 @@ func (suite *DbTestSuite) TestSaveValidatorStatus() {
 			validator1.GetConsPubKey(),
 			1,
 			false,
-			false,
 			10,
 		),
 		types.NewValidatorStatus(
 			validator2.GetConsAddr(),
 			validator2.GetConsPubKey(),
 			2,
-			true,
 			true,
 			10,
 		),
@@ -656,13 +654,11 @@ func (suite *DbTestSuite) TestSaveValidatorStatus() {
 		dbtypes.NewValidatorStatusRow(
 			1,
 			false,
-			false,
 			validator1.GetConsAddr(),
 			10,
 		),
 		dbtypes.NewValidatorStatusRow(
 			2,
-			true,
 			true,
 			validator2.GetConsAddr(),
 			10,
@@ -680,14 +676,12 @@ func (suite *DbTestSuite) TestSaveValidatorStatus() {
 			validator1.GetConsPubKey(),
 			3,
 			true,
-			true,
 			9,
 		),
 		types.NewValidatorStatus(
 			validator2.GetConsAddr(),
 			validator2.GetConsPubKey(),
 			3,
-			true,
 			true,
 			11,
 		),
@@ -703,13 +697,11 @@ func (suite *DbTestSuite) TestSaveValidatorStatus() {
 		dbtypes.NewValidatorStatusRow(
 			1,
 			false,
-			false,
 			validator1.GetConsAddr(),
 			10,
 		),
 		dbtypes.NewValidatorStatusRow(
 			3,
-			true,
 			true,
 			validator2.GetConsAddr(),
 			11,
@@ -730,12 +722,12 @@ func (suite *DbTestSuite) TestSaveDoubleVoteEvidence() {
 		"cosmosvaloper1rcp29q3hpd246n6qak7jluqep4v006cdsc2kkl",
 		"cosmosvalconspub1zcjduepq7mft6gfls57a0a42d7uhx656cckhfvtrlmw744jv4q0mvlv0dypskehfk8",
 	)
-
+	var evidences []types.DoubleSignEvidence
 	// Insert data
-	evidence := types.NewDoubleSignEvidence(
+	evidences = append(evidences, types.NewDoubleSignEvidence(
 		10,
 		types.NewDoubleSignVote(
-			int(tmtypes.PrevoteType),
+			int(cmtypes.PrevoteType),
 			10,
 			1,
 			"A42C9492F5DE01BFA6117137102C3EF909F1A46C2F56915F542D12AC2D0A5BCA",
@@ -744,7 +736,7 @@ func (suite *DbTestSuite) TestSaveDoubleVoteEvidence() {
 			"1qwPQjPrc7DH7+f6YAE3fOkq6phDAJ60dEyhmcZ7dx2ZgGvi9DbVLsn4leYqRNA/63ZeeH5kVly8zI1jCh4iBg==",
 		),
 		types.NewDoubleSignVote(
-			int(tmtypes.PrevoteType),
+			int(cmtypes.PrevoteType),
 			10,
 			1,
 			"418A20D12F45FC9340BE0CD2EDB0FFA1E4316176B8CE11E123EF6CBED23C8423",
@@ -752,8 +744,9 @@ func (suite *DbTestSuite) TestSaveDoubleVoteEvidence() {
 			1,
 			"A5m7SVuvZ8YNXcUfBKLgkeV+Vy5ea+7rPfzlbkEvHOPPce6B7A2CwOIbCmPSVMKUarUdta+HiyTV+IELaOYyDA==",
 		),
+	),
 	)
-	err := suite.database.SaveDoubleSignEvidence(evidence)
+	err := suite.database.SaveDoubleSignEvidences(evidences)
 	suite.Require().NoError(err)
 
 	// Verify insertion
@@ -766,7 +759,7 @@ func (suite *DbTestSuite) TestSaveDoubleVoteEvidence() {
 	expectVotes := []dbtypes.DoubleSignVoteRow{
 		dbtypes.NewDoubleSignVoteRow(
 			1,
-			int(tmtypes.PrevoteType),
+			int(cmtypes.PrevoteType),
 			10,
 			1,
 			"A42C9492F5DE01BFA6117137102C3EF909F1A46C2F56915F542D12AC2D0A5BCA",
@@ -776,7 +769,7 @@ func (suite *DbTestSuite) TestSaveDoubleVoteEvidence() {
 		),
 		dbtypes.NewDoubleSignVoteRow(
 			2,
-			int(tmtypes.PrevoteType),
+			int(cmtypes.PrevoteType),
 			10,
 			1,
 			"418A20D12F45FC9340BE0CD2EDB0FFA1E4316176B8CE11E123EF6CBED23C8423",
