@@ -4,8 +4,11 @@ import (
 	"fmt"
 
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/rs/zerolog/log"
 
 	juno "github.com/forbole/juno/v6/types"
+
+	"github.com/forbole/callisto/v4/utils"
 )
 
 var msgFilter = map[string]bool{
@@ -27,6 +30,8 @@ func (m *Module) HandleMsg(_ int, msg juno.Message, tx *juno.Transaction) error 
 		return nil
 	}
 
+	log.Debug().Str("module", "staking").Str("hash", tx.TxHash).Uint64("height", tx.Height).Msg(fmt.Sprintf("handling staking message %s", msg.GetType()))
+
 	switch msg.GetType() {
 	case "/cosmos.staking.v1beta1.MsgCreateValidator":
 		cosmosMsg := utils.UnpackMessage(m.cdc, msg.GetBytes(), &stakingtypes.MsgCreateValidator{})
@@ -47,6 +52,7 @@ func (m *Module) HandleMsg(_ int, msg juno.Message, tx *juno.Transaction) error 
 
 	case "/cosmos.staking.v1beta1.MsgUndelegate":
 		return m.UpdateValidatorStatuses()
+
 	}
 
 	return nil

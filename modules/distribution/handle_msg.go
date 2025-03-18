@@ -3,7 +3,6 @@ package distribution
 import (
 	"fmt"
 
-	"github.com/cosmos/cosmos-sdk/x/authz"
 	juno "github.com/forbole/juno/v6/types"
 	"github.com/rs/zerolog/log"
 )
@@ -13,7 +12,7 @@ var msgFilter = map[string]bool{
 }
 
 // HandleMsgExec implements modules.AuthzMessageModule
-func (m *Module) HandleMsgExec(index int, _ *authz.MsgExec, _ int, executedMsg juno.Message, tx *juno.Transaction) error {
+func (m *Module) HandleMsgExec(index int, _ int, executedMsg juno.Message, tx *juno.Transaction) error {
 	return m.HandleMsg(index, executedMsg, tx)
 }
 

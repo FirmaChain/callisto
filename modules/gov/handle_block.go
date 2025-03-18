@@ -15,7 +15,7 @@ import (
 
 // HandleBlock implements modules.BlockModule
 func (m *Module) HandleBlock(
-	b *cmttypes.ResultBlock, blockResults *cmttypes.ResultBlockResults, txs []*juno.Transaction, vals *cmttypes.ResultValidators,
+	b *cmttypes.ResultBlock, blockResults *cmttypes.ResultBlockResults, txs []*juno.Transaction, _ *cmttypes.ResultValidators,
 ) error {
 	txEvents := collectTxEvents(txs)
 	err := m.updateProposalsStatus(b.Block.Height, txEvents, blockResults.FinalizeBlockEvents)
@@ -23,6 +23,7 @@ func (m *Module) HandleBlock(
 		log.Error().Str("module", "gov").Int64("height", b.Block.Height).
 			Err(err).Msg("error while updating proposals")
 	}
+
 	return nil
 }
 

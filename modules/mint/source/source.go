@@ -6,6 +6,6 @@ import (
 )
 
 type Source interface {
-	GetInflation(height int64) (math.LegacyDe, error)
+	GetInflation(height int64) (math.LegacyDec, error)
 	Params(height int64) (minttypes.Params, error)
 }

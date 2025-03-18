@@ -21,7 +21,7 @@ type Source struct {
 	querier minttypes.QueryServer
 }
 
-// NewSource returns a new Source instace
+// NewSource returns a new Source instance
 func NewSource(source *local.Source, querier minttypes.QueryServer) *Source {
 	return &Source{
 		Source:  source,

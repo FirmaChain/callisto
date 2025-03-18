@@ -18,7 +18,6 @@ require (
 	github.com/cosmos/gogoproto v1.7.0
 	github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8 v8.2.0
 	github.com/cosmos/ibc-go/v8 v8.6.1
-	github.com/emicklei/proto v1.9.0
 	github.com/firmachain/firmachain v0.4.0
 	github.com/forbole/juno/v6 v6.0.1
 	github.com/go-co-op/gocron v1.37.0

@@ -313,6 +313,10 @@ func (m *Module) updateValidatorStatusAndVP(height int64, validators []stakingty
 
 	for index, validator := range validators {
 		consAddr, err := m.getValidatorConsAddr(validator)
+		if err != nil && !strings.Contains(err.Error(), codes.NotFound.String()) {
+			return fmt.Errorf("error while getting validator signing info: %s", err)
+		}
+
 		if err != nil {
 			return err
 		}
@@ -326,9 +330,6 @@ func (m *Module) updateValidatorStatusAndVP(height int64, validators []stakingty
 			return err
 		}
 
-		if err != nil && !strings.Contains(err.Error(), codes.NotFound.String()) {
-			return fmt.Errorf("error while getting validator signing info: %s", err)
-		}
 		votingPowers[index] = types.NewValidatorVotingPower(consAddr.String(), validator.Tokens.Int64(), height)
 
 		statuses[index] = types.NewValidatorStatus(

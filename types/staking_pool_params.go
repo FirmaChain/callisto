@@ -7,17 +7,21 @@ import (
 
 // Pool contains the data of the staking pool at the given height
 type Pool struct {
-	BondedTokens    math.Int
-	NotBondedTokens math.Int
-	Height          int64
+	BondedTokens          math.Int
+	NotBondedTokens       math.Int
+	UnbondingTokens       math.Int
+	StakedNotBondedTokens math.Int
+	Height                int64
 }
 
 // NewPool allows to build a new Pool instance
-func NewPool(bondedTokens, notBondedTokens math.Int, height int64) *Pool {
+func NewPool(bondedTokens, notBondedTokens, unbondingTokens, stakedNotBondedTokens math.Int, height int64) *Pool {
 	return &Pool{
-		BondedTokens:    bondedTokens,
-		NotBondedTokens: notBondedTokens,
-		Height:          height,
+		BondedTokens:          bondedTokens,
+		NotBondedTokens:       notBondedTokens,
+		UnbondingTokens:       unbondingTokens,
+		StakedNotBondedTokens: stakedNotBondedTokens,
+		Height:                height,
 	}
 }
 

@@ -6,7 +6,6 @@ import (
 
 	"github.com/forbole/callisto/v4/types"
 
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	juno "github.com/forbole/juno/v6/types"
 
 	cmttypes "github.com/cometbft/cometbft/rpc/core/types"
@@ -28,48 +27,6 @@ func (m *Module) HandleBlock(
 	go m.updateDoubleSignEvidence(block.Block.Height, block.Block.Evidence.Evidence)
 
 	return nil
-}
-
-// updateValidatorsStatus updates all validators' statuses
-func (m *Module) updateValidatorsStatus(height int64, validators []stakingtypes.Validator) {
-	log.Debug().Str("module", "staking").Int64("height", height).
-		Msg("updating validators statuses")
-
-	statuses, err := m.GetValidatorsStatuses(height, validators)
-	if err != nil {
-		log.Error().Str("module", "staking").Err(err).
-			Int64("height", height).
-			Send()
-		return
-	}
-
-	err = m.db.SaveValidatorsStatuses(statuses)
-	if err != nil {
-		log.Error().Str("module", "staking").Err(err).
-			Int64("height", height).
-			Msg("error while saving validators statuses")
-	}
-}
-
-// updateValidatorVotingPower fetches and stores into the database all the current validators' voting powers
-func (m *Module) updateValidatorVotingPower(height int64, vals *cmttypes.ResultValidators) {
-	log.Debug().Str("module", "staking").Int64("height", height).
-		Msg("updating validators voting powers")
-
-	// Get the voting powers
-	votingPowers, err := m.GetValidatorsVotingPowers(height, vals)
-	if err != nil {
-		log.Error().Str("module", "staking").Err(err).Int64("height", height).
-			Msg("error while getting validators voting powers")
-		return
-	}
-
-	// Save all the voting powers
-	err = m.db.SaveValidatorsVotingPowers(votingPowers)
-	if err != nil {
-		log.Error().Str("module", "staking").Err(err).Int64("height", height).
-			Msg("error while saving validators voting powers")
-	}
 }
 
 // updateDoubleSignEvidence updates the double sign evidence of all validators
@@ -114,24 +71,5 @@ func (m *Module) updateDoubleSignEvidence(height int64, evidenceList cmtypes.Evi
 			Msg("error while saving double sign evidence")
 		return
 	}
-}
 
-// updateStakingPool reads from the LCD the current staking pool and stores its value inside the database
-func (m *Module) updateStakingPool(height int64) {
-	log.Debug().Str("module", "staking").Int64("height", height).
-		Msg("updating staking pool")
-
-	pool, err := m.GetStakingPool(height)
-	if err != nil {
-		log.Error().Str("module", "staking").Err(err).Int64("height", height).
-			Msg("error while getting staking pool")
-		return
-	}
-
-	err = m.db.SaveStakingPool(pool)
-	if err != nil {
-		log.Error().Str("module", "staking").Err(err).Int64("height", height).
-			Msg("error while saving staking pool")
-		return
-	}
 }
