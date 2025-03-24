@@ -1,8 +1,6 @@
 module github.com/forbole/callisto/v4
 
-go 1.23.1
-
-toolchain go1.23.4
+go 1.23.4
 
 require (
 	cosmossdk.io/log v1.5.0
@@ -36,14 +34,15 @@ require (
 
 require (
 	cosmossdk.io/api v0.7.6 // indirect
+	cosmossdk.io/client/v2 v2.0.0-beta.8 // indirect
 	cosmossdk.io/collections v0.4.0 // indirect
-	cosmossdk.io/core v0.11.1 // indirect
+	cosmossdk.io/core v0.11.2 // indirect
 	cosmossdk.io/depinject v1.1.0 // indirect
 	cosmossdk.io/errors v1.0.1 // indirect
-	cosmossdk.io/x/tx v0.13.7 // indirect
+	cosmossdk.io/x/tx v0.13.8 // indirect
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
-	github.com/99designs/keyring v1.2.1 // indirect
+	github.com/99designs/keyring v1.2.2 // indirect
 	github.com/CosmWasm/wasmvm/v2 v2.2.1 // indirect
 	github.com/DataDog/datadog-go v3.2.0+incompatible // indirect
 	github.com/DataDog/zstd v1.5.5 // indirect
@@ -197,4 +196,6 @@ replace (
 	cosmossdk.io/core => cosmossdk.io/core v0.11.2
 	github.com/forbole/juno/v3 => github.com/firmachain/juno/v3 v3.4.6
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
+	github.com/kintsugi-tech/firmachain v0.5.0-alpha.2 => /Users/luca/kintsugi/firmachain
+
 )

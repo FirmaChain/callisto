@@ -1,6 +1,7 @@
 package main
 
-import (
+//TODO: fix import firmachain
+/*import (
 	"github.com/cosmos/cosmos-sdk/codec"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -23,4 +24,4 @@ func FirmaChainTokenMessagesParser(_ codec.Codec, cosmosMsg sdk.Msg) ([]string, 
 	}
 
 	return nil, nil
-}
+}*/
