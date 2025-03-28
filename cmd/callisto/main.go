@@ -53,12 +53,12 @@ func main() {
 // This should be edited by custom implementations if needed.
 func getAddressesParser() messages.MessageAddressesParser {
 	return messages.JoinMessageParsers(
-		/*FirmaChainCosmWasmMessagesParser,
+		FirmaChainCosmWasmMessagesParser,
 		FirmaChainFeegrantMessagesParser,
 		FirmaChainAuthzMessagesParser,
 		FirmaChainContractMessagesParser,
 		FirmaChainNFTMessagesParser,
-		FirmaChainTokenMessagesParser, */
+		FirmaChainTokenMessagesParser,
 
 		messages.CosmosMessageAddressesParser,
 	)
