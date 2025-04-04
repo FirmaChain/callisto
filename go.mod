@@ -16,6 +16,7 @@ require (
 	github.com/cosmos/gogoproto v1.7.0
 	github.com/cosmos/ibc-apps/middleware/packet-forward-middleware/v8 v8.2.0
 	github.com/cosmos/ibc-go/v8 v8.6.1
+	github.com/firmachain/firmachain v0.5.0-develop
 	github.com/forbole/juno/v6 v6.0.1
 	github.com/go-co-op/gocron v1.37.0
 	github.com/gogo/protobuf v1.3.3
@@ -33,7 +34,6 @@ require (
 
 require (
 	cosmossdk.io/api v0.7.6 // indirect
-	cosmossdk.io/client/v2 v2.0.0-beta.8 // indirect
 	cosmossdk.io/collections v0.4.0 // indirect
 	cosmossdk.io/core v0.11.2 // indirect
 	cosmossdk.io/depinject v1.1.0 // indirect
@@ -193,8 +193,8 @@ require (
 
 replace (
 	cosmossdk.io/core => cosmossdk.io/core v0.11.2
+	github.com/firmachain/firmachain v0.5.0-develop => /Users/luca/kintsugi/firmachain
 	github.com/forbole/juno/v3 => github.com/firmachain/juno/v3 v3.4.6
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-	github.com/firmachain/firmachain v0.5.0-develop => /Users/luca/kintsugi/firmachain
 
 )
