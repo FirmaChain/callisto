@@ -31,6 +31,7 @@ func proposalCmd(parseConfig *parsecmdtypes.Config) *cobra.Command {
 		Use:   "proposal [id]",
 		Short: "Get the description, votes and everything related to a proposal given its id",
 		RunE: func(cmd *cobra.Command, args []string) error {
+			fmt.Printf(args[0])
 			proposalID, err := strconv.ParseUint(args[0], 10, 64)
 			if err != nil {
 				return err

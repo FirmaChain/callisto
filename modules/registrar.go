@@ -24,6 +24,7 @@ import (
 	"github.com/forbole/callisto/v4/modules/distribution"
 	"github.com/forbole/callisto/v4/modules/feegrant"
 
+	dailyrefetch "github.com/forbole/callisto/v4/modules/daily_refetch"
 	juno "github.com/forbole/juno/v6/types"
 
 	"github.com/forbole/callisto/v4/modules/gov"
@@ -80,6 +81,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 	authModule := auth.NewModule(r.parser, r.cdc, db)
 	bankModule := bank.NewModule(r.parser, sources.BankSource, r.cdc, db)
 	consensusModule := consensus.NewModule(db)
+	dailyRefectModule := dailyrefetch.NewModule(ctx.Proxy, db)
 	distrModule := distribution.NewModule(sources.DistrSource, r.cdc, db)
 	feegrantModule := feegrant.NewModule(r.cdc, db)
 	messagetypeModule := messagetype.NewModule(r.parser, r.cdc, db)
@@ -98,6 +100,7 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		authModule,
 		bankModule,
 		consensusModule,
+		dailyRefectModule,
 		distrModule,
 		feegrantModule,
 		govModule,
