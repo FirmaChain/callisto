@@ -41,7 +41,8 @@ func WeightVoteOptionFromEvents(events sdk.StringEvents) (govtypesv1.WeightedVot
 // parseWeightVoteOption returns the vote option from the given string
 // option value in string has 2 cases, for example:
 // 1. "{\"option\":1,\"weight\":\"1.000000000000000000\"}"
-// 2. "option:VOTE_OPTION_NO weight:\"1.000000000000000000\""
+// 2. "[{\"option\":1,\"weight\":\"1.000000000000000000\"}]"
+// 3. "option:VOTE_OPTION_NO weight:\"1.000000000000000000\""
 func parseWeightVoteOption(optionValue string) (govtypesv1.WeightedVoteOption, error) {
 	// try parse json option value
 	var weightedVoteOption govtypesv1.WeightedVoteOption
