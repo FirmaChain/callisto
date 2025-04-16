@@ -49,11 +49,24 @@ func (m *Module) convertValidator(height int64, validator stakingtypes.Validator
 		return nil, fmt.Errorf("error while getting validator consensus pub key: %s", err)
 	}
 
+	// we need to do some magic to get the proper self delegate address
+	bz, err := sdk.GetFromBech32(validator.GetOperator(), sdk.GetConfig().GetBech32ValidatorAddrPrefix())
+	if err != nil {
+		return nil, fmt.Errorf("cannot convert operator to self delegate addr: %s", err)
+	}
+
+	err = sdk.VerifyAddressFormat(bz)
+	if err != nil {
+		return nil, fmt.Errorf("cannot convert operator to self delegate addr: %s", err)
+	}
+
+	selfAddr := sdk.AccAddress(bz)
+
 	return types.NewValidator(
 		consAddr.String(),
 		validator.OperatorAddress,
 		consPubKey.String(),
-		sdk.AccAddress(validator.GetOperator()).String(),
+		selfAddr.String(),
 		&validator.Commission.MaxChangeRate,
 		&validator.Commission.MaxRate,
 		height,
