@@ -136,6 +136,18 @@ func refreshProposalDetails(parseCtx *parser.Context, proposalID uint64, govModu
 	log.Debug().Msg(fmt.Sprintf("raw tx body messages: %+v", tx.Body.Messages))
 	log.Debug().Msg(fmt.Sprintf("raw tx body memo: %s", tx.Body.Memo))
 
+	// Try to unpack the messages
+	if len(tx.GetMsgs()) == 0 && len(tx.Body.Messages) > 0 {
+		log.Debug().Msg("Attempting to unpack messages")
+		cdc := utils.GetCodec()
+		err = tx.Body.UnpackInterfaces(cdc)
+		if err != nil {
+			log.Error().Err(err).Msg("error while unpacking interfaces")
+		} else {
+			log.Debug().Msg(fmt.Sprintf("unpacked messages: %+v", tx.GetMsgs()))
+		}
+	}
+
 	// Handle the MsgSubmitProposal messages
 	for index, msg := range tx.GetMsgs() {
 
