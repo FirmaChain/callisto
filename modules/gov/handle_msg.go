@@ -56,6 +56,13 @@ func (m *Module) HandleMsg(index int, msg juno.Message, tx *juno.Transaction) er
 		return m.handleSubmitProposalEvent(tx, cosmosMsg.Proposer, eventutils.FindEventsByMsgIndex(sdk.StringifyEvents(tx.Events), index))
 	case "/cosmos.gov.v1beta1.MsgSubmitProposal":
 		cosmosMsg := utils.UnpackMessage(m.cdc, msg.GetBytes(), &govtypesv1beta1.MsgSubmitProposal{})
+		
+		// Legacy proposal have raw log filled, and no msg_index inside the events.
+		if (tx.RawLog  != "" && len(tx.Logs) > 0) {
+			events := tx.Logs[index].Events
+			return m.handleSubmitProposalEvent(tx, cosmosMsg.Proposer, events);
+		}
+
 		return m.handleSubmitProposalEvent(tx, cosmosMsg.Proposer, eventutils.FindEventsByMsgIndex(sdk.StringifyEvents(tx.Events), index))
 
 	case "/cosmos.gov.v1.MsgDeposit":

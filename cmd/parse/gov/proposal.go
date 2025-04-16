@@ -153,7 +153,7 @@ func refreshProposalDetails(parseCtx *parser.Context, proposalID uint64, govModu
 		case *govtypesv1.MsgSubmitProposal, *govtypesv1beta1.MsgSubmitProposal:
 			log.Debug().Msg("type ok")
 			// check events
-			log.Debug().Msg(fmt.Sprintf("Num events %d", len(tx.Events)))
+			log.Debug().Msg(fmt.Sprintf("Num events %d, index %d", len(tx.Events), index))
 
 			err = govModule.HandleMsg(index, tx.Body.Messages[index], tx)
 			if err != nil {
