@@ -193,7 +193,7 @@ require (
 
 replace (
 	cosmossdk.io/core => cosmossdk.io/core v0.11.2
-	github.com/firmachain/firmachain v0.5.0-develop => /Users/luca/kintsugi/firmachain
+	github.com/firmachain/firmachain v0.5.0-develop => /Users/dimi/Chainz/firmachain
 	github.com/forbole/juno/v3 => github.com/firmachain/juno/v3 v3.4.6
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
