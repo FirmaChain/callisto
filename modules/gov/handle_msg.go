@@ -41,8 +41,6 @@ func (m *Module) HandleMsgExec(index int, _ int, executedMsg juno.Message, tx *j
 // HandleMsg implements modules.MessageModule
 func (m *Module) HandleMsg(index int, msg juno.Message, tx *juno.Transaction) error {
 
-	log.Debug().Msg("handlemsg")
-
 	if _, ok := msgFilter[msg.GetType()]; !ok {
 		return nil
 	}
@@ -51,7 +49,6 @@ func (m *Module) HandleMsg(index int, msg juno.Message, tx *juno.Transaction) er
 
 	switch msg.GetType() {
 	case "/cosmos.gov.v1.MsgSubmitProposal":
-		log.Debug().Msg("okmdg")
 		cosmosMsg := utils.UnpackMessage(m.cdc, msg.GetBytes(), &govtypesv1.MsgSubmitProposal{})
 		return m.handleSubmitProposalEvent(tx, cosmosMsg.Proposer, eventutils.FindEventsByMsgIndex(sdk.StringifyEvents(tx.Events), index))
 	case "/cosmos.gov.v1beta1.MsgSubmitProposal":
@@ -114,7 +111,6 @@ func (m *Module) handleSubmitProposalEvent(tx *juno.Transaction, proposer string
 				return fmt.Errorf("error while getting proposal using latest height: %s", err)
 			}
 		} else {
-			log.Debug().Msg(fmt.Sprintf("err %s", err.Error()))
 			return fmt.Errorf("error while getting proposal with tx height: %s", err)
 		}
 	}

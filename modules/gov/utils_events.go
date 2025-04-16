@@ -9,7 +9,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	"github.com/rs/zerolog/log"
 
 	eventsutil "github.com/forbole/callisto/v4/utils/events"
 )
@@ -17,10 +16,7 @@ import (
 // ProposalIDFromEvent returns the proposal id from the given events
 func ProposalIDFromEvents(events sdk.StringEvents) (uint64, error) {
 
-	log.Debug().Msg(fmt.Sprintf("Num events %d", len(events)))
-
 	for _, event := range events {
-		log.Debug().Msg(fmt.Sprintf("Key %s", event.Type))
 		attribute, ok := eventsutil.FindAttributeByKey(event, govtypes.AttributeKeyProposalID)
 		if ok {
 			return strconv.ParseUint(attribute.Value, 10, 64)

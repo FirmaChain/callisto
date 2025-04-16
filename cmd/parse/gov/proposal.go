@@ -120,7 +120,6 @@ func refreshProposalDetails(parseCtx *parser.Context, proposalID uint64, govModu
 		fmt.Printf("error: couldn't find submit proposal tx info")
 		return nil
 	}
-	log.Debug().Msg(fmt.Sprintf("tx found! %d", len(txs)))
 
 	// Get the tx details
 	tx, err := parseCtx.Node.Tx(hex.EncodeToString(txs[0].Tx.Hash()))
@@ -137,24 +136,11 @@ func refreshProposalDetails(parseCtx *parser.Context, proposalID uint64, govModu
 		return err
 	}
 
-	log.Debug().Msg("tx ok")
-	log.Debug().Msg(fmt.Sprintf("tx hash: %s", tx.TxHash))
-	log.Debug().Msg(fmt.Sprintf("tx height: %d", tx.Height))
-	log.Debug().Msg(fmt.Sprintf("messages length: %d", len(tx.GetMsgs())))
-	log.Debug().Msg(fmt.Sprintf("body messages length: %d", len(tx.Body.Messages)))
-	log.Debug().Msg(fmt.Sprintf("sdktx messages length: %d", len(sdkTx.GetMsgs())))
-
 	// Handle the MsgSubmitProposal messages
 	for index, msg := range sdkTx.GetMsgs() {
-
-		log.Debug().Msg("range on msg")
-
 		switch msg.(type) {
 		case *govtypesv1.MsgSubmitProposal, *govtypesv1beta1.MsgSubmitProposal:
-			log.Debug().Msg("type ok")
 			// check events
-			log.Debug().Msg(fmt.Sprintf("Num events %d, index %d", len(tx.Events), index))
-
 			err = govModule.HandleMsg(index, tx.Body.Messages[index], tx)
 			if err != nil {
 				return fmt.Errorf("error while handling MsgSubmitProposal: %s", err)
