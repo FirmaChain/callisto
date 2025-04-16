@@ -125,6 +125,9 @@ func refreshProposalDetails(parseCtx *parser.Context, proposalID uint64, govModu
 	if err != nil {
 		return err
 	}
+	log.Debug().Msg("tx ok")
+	log.Debug().Msg(fmt.Sprintf("lol %s", tx.TxHash))
+	log.Debug().Msg(fmt.Sprintf("msg len %d", len(tx.GetMsgs())))
 
 	// Handle the MsgSubmitProposal messages
 	for index, msg := range tx.GetMsgs() {
