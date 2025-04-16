@@ -129,7 +129,7 @@ func refreshProposalDetails(parseCtx *parser.Context, proposalID uint64, govModu
 	log.Debug().Msg(fmt.Sprintf("lol %s", tx.TxHash))
 	log.Debug().Msg(fmt.Sprintf("lol2 %d", tx.Height))
 	log.Debug().Msg(fmt.Sprintf("msg len %d", len(tx.GetMsgs())))
-	log.Debug().Msg(fmt.Sprintf("tx body %s", tx.Body))
+	log.Debug().Msg(fmt.Sprintf("tx body %s", tx.Body.String()))
 
 	// Handle the MsgSubmitProposal messages
 	for index, msg := range tx.GetMsgs() {
