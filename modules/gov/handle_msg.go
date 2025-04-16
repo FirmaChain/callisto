@@ -95,7 +95,7 @@ func (m *Module) handleSubmitProposalEvent(tx *juno.Transaction, proposer string
 	// Get the proposal
 	proposal, err := m.source.Proposal(int64(tx.Height), proposalID)
 	if err != nil {
-		if strings.Contains(err.Error(), codes.NotFound.String()) {
+		if strings.Contains(err.Error(), codes.NotFound.String()) || strings.Contains(err.Error(), "version mismatch") {
 			// query the proposal details using the latest height stored in db
 			// to fix the rpc error returning code = NotFound desc = proposal x doesn't exist
 			block, err := m.db.GetLastBlockHeightAndTimestamp()
@@ -104,7 +104,7 @@ func (m *Module) handleSubmitProposalEvent(tx *juno.Transaction, proposer string
 			}
 			proposal, err = m.source.Proposal(block.Height, proposalID)
 			if err != nil {
-				return fmt.Errorf("error while getting proposal: %s", err)
+				return fmt.Errorf("error while getting proposal, even using latest height: %s", err)
 			}
 		} else {
 			return fmt.Errorf("error while getting proposal: %s", err)
