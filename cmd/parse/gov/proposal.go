@@ -126,10 +126,15 @@ func refreshProposalDetails(parseCtx *parser.Context, proposalID uint64, govModu
 		return err
 	}
 	log.Debug().Msg("tx ok")
-	log.Debug().Msg(fmt.Sprintf("lol %s", tx.TxHash))
-	log.Debug().Msg(fmt.Sprintf("lol2 %d", tx.Height))
-	log.Debug().Msg(fmt.Sprintf("msg len %d", len(tx.GetMsgs())))
-	log.Debug().Msg(fmt.Sprintf("tx body %s", tx.Body.String()))
+	log.Debug().Msg(fmt.Sprintf("tx hash: %s", tx.TxHash))
+	log.Debug().Msg(fmt.Sprintf("tx height: %d", tx.Height))
+	log.Debug().Msg(fmt.Sprintf("messages length: %d", len(tx.GetMsgs())))
+	log.Debug().Msg(fmt.Sprintf("body messages length: %d", len(tx.Body.Messages)))
+	log.Debug().Msg(fmt.Sprintf("body messages: %+v", tx.Body.Messages))
+	log.Debug().Msg(fmt.Sprintf("raw tx: %+v", tx))
+	log.Debug().Msg(fmt.Sprintf("raw tx body: %+v", tx.Body))
+	log.Debug().Msg(fmt.Sprintf("raw tx body messages: %+v", tx.Body.Messages))
+	log.Debug().Msg(fmt.Sprintf("raw tx body memo: %s", tx.Body.Memo))
 
 	// Handle the MsgSubmitProposal messages
 	for index, msg := range tx.GetMsgs() {
