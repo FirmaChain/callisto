@@ -152,6 +152,9 @@ func refreshProposalDetails(parseCtx *parser.Context, proposalID uint64, govModu
 		switch msg.(type) {
 		case *govtypesv1.MsgSubmitProposal, *govtypesv1beta1.MsgSubmitProposal:
 			log.Debug().Msg("type ok")
+			// check events
+			log.Debug().Msg(fmt.Sprintf("Num events %d", len(tx.Events)))
+
 			err = govModule.HandleMsg(index, tx.Body.Messages[index], tx)
 			if err != nil {
 				return fmt.Errorf("error while handling MsgSubmitProposal: %s", err)
