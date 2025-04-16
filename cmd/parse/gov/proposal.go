@@ -23,6 +23,8 @@ import (
 
 	"github.com/forbole/callisto/v4/modules/staking"
 	"github.com/forbole/callisto/v4/utils"
+
+	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 )
 
 // proposalCmd returns the Cobra command allowing to fix all things related to a proposal
@@ -130,7 +132,34 @@ func refreshProposalDetails(parseCtx *parser.Context, proposalID uint64, govModu
 	log.Debug().Msg(fmt.Sprintf("tx height: %d", tx.Height))
 	log.Debug().Msg(fmt.Sprintf("messages length: %d", len(tx.GetMsgs())))
 	log.Debug().Msg(fmt.Sprintf("body messages length: %d", len(tx.Body.Messages)))
-	log.Debug().Msg(fmt.Sprintf("body messages: %+v", tx.Body.Messages))
+	
+	// Log the raw transaction data
+	// log.Debug().Msg(fmt.Sprintf("Raw transaction data: %x", txs[0].Tx))
+	
+	// Try to decode the raw transaction
+	if len(tx.GetMsgs()) == 0 && len(tx.Body.Messages) > 0 {
+		log.Debug().Msg("Attempting to decode raw transaction")
+		cdc := utils.GetCodec()
+		
+		// Try to decode as a Tx
+		var sdkTx txtypes.Tx
+		err = cdc.Unmarshal(txs[0].Tx, &sdkTx)
+		if err != nil {
+			log.Error().Err(err).Msg("error while decoding as Tx")
+		} else {
+			log.Debug().Msg(fmt.Sprintf("decoded tx messages: %+v", sdkTx.GetMsgs()))
+		}
+		
+		// Try to decode as a TxBody
+		var txBody txtypes.TxBody
+		err = cdc.Unmarshal(txs[0].Tx, &txBody)
+		if err != nil {
+			log.Error().Err(err).Msg("error while decoding as TxBody")
+		} else {
+			log.Debug().Msg(fmt.Sprintf("decoded tx body messages: %+v", txBody.Messages))
+		}
+	}
+
 	log.Debug().Msg(fmt.Sprintf("raw tx: %+v", tx))
 	log.Debug().Msg(fmt.Sprintf("raw tx body: %+v", tx.Body))
 	log.Debug().Msg(fmt.Sprintf("raw tx body messages: %+v", tx.Body.Messages))
