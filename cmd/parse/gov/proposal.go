@@ -118,6 +118,7 @@ func refreshProposalDetails(parseCtx *parser.Context, proposalID uint64, govModu
 		fmt.Printf("error: couldn't find submit proposal tx info")
 		return nil
 	}
+	log.Debug().Msg(fmt.Sprintf("tx found! %d", len(txs)))
 
 	// Get the tx details
 	tx, err := parseCtx.Node.Tx(hex.EncodeToString(txs[0].Tx.Hash()))
@@ -128,8 +129,11 @@ func refreshProposalDetails(parseCtx *parser.Context, proposalID uint64, govModu
 	// Handle the MsgSubmitProposal messages
 	for index, msg := range tx.GetMsgs() {
 
+		log.Debug().Msg("range on msg")
+
 		switch msg.(type) {
 		case *govtypesv1.MsgSubmitProposal, *govtypesv1beta1.MsgSubmitProposal:
+			log.Debug().Msg("type ok")
 			err = govModule.HandleMsg(index, tx.Body.Messages[index], tx)
 			if err != nil {
 				return fmt.Errorf("error while handling MsgSubmitProposal: %s", err)
