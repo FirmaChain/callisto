@@ -104,10 +104,11 @@ func (m *Module) handleSubmitProposalEvent(tx *juno.Transaction, proposer string
 			}
 			proposal, err = m.source.Proposal(block.Height, proposalID)
 			if err != nil {
-				return fmt.Errorf("error while getting proposal, even using latest height: %s", err)
+				return fmt.Errorf("error while getting proposal using latest height: %s", err)
 			}
 		} else {
-			return fmt.Errorf("error while getting proposal: %s", err)
+			log.Debug().Msg(fmt.Sprintf("err %s", err.Error()))
+			return fmt.Errorf("error while getting proposal with tx height: %s", err)
 		}
 	}
 
