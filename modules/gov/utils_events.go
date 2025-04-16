@@ -50,6 +50,13 @@ func parseWeightVoteOption(optionValue string) (govtypesv1.WeightedVoteOption, e
 		return weightedVoteOption, nil
 	}
 
+	// try parse json option value as array
+	var weightedVoteOptionArray []govtypesv1.WeightedVoteOption
+	err2 := json.Unmarshal([]byte(optionValue), &weightedVoteOptionArray)
+	if err2 == nil {
+		return weightedVoteOptionArray[0], nil
+	}
+
 	// try parse string option value
 	// option:VOTE_OPTION_NO weight:"1.000000000000000000"
 	voteOptionParsed := strings.Split(optionValue, " ")
