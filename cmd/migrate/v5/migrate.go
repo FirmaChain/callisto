@@ -8,7 +8,7 @@ import (
 	"github.com/forbole/juno/v6/database/postgresql"
 	"github.com/forbole/juno/v6/types/config"
 
-	v6db "github.com/forbole/callisto/v4/database/migrate/v6"
+	v5db "github.com/forbole/callisto/v4/database/migrate/v5"
 )
 
 // RunMigration runs the migrations to v5
@@ -36,6 +36,6 @@ func migrateDb(cfg config.Config, parseConfig *parse.Config) error {
 	}
 
 	// Build the migrator and perform the migrations
-	migrator := v6db.NewMigrator(db.(*postgresql.Database))
+	migrator := v5db.NewMigrator(db.(*postgresql.Database))
 	return migrator.Migrate()
 }
