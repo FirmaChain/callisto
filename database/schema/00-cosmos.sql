@@ -14,7 +14,7 @@ CREATE TABLE pre_commit
     UNIQUE (validator_address, timestamp)
 );
 CREATE INDEX pre_commit_validator_address_index ON pre_commit (validator_address);
-CREATE INDEX pre_commit_height_index ON pre_commit (height);
+CREATE INDEX pre_commit_height_index ON pre_commit (height); 
 
 CREATE TABLE block
 (
@@ -56,6 +56,8 @@ CREATE TABLE transaction
     gas_used     BIGINT           DEFAULT 0,
     raw_log      TEXT,
     logs         JSONB,
+
+    events JSONB NOT NULL DEFAULT '[]'::JSONB,
 
     /* PSQL partition */
     partition_id BIGINT  NOT NULL DEFAULT 0,

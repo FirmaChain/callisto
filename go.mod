@@ -193,7 +193,6 @@ require (
 
 replace (
 	cosmossdk.io/core => cosmossdk.io/core v0.11.2
-	github.com/forbole/juno/v3 => github.com/firmachain/juno/v3 v3.4.6
+	github.com/forbole/juno/v6 => github.com/kintsugi-tech/forbole-juno/v6 v6.0.2
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-
 )
