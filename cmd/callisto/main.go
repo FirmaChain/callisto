@@ -1,35 +1,32 @@
 package main
 
 import (
-	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/forbole/juno/v3/cmd"
-	initcmd "github.com/forbole/juno/v3/cmd/init"
-	parsetypes "github.com/forbole/juno/v3/cmd/parse/types"
-	startcmd "github.com/forbole/juno/v3/cmd/start"
-	"github.com/forbole/juno/v3/modules/messages"
+	"github.com/forbole/callisto/v4/utils"
+	"github.com/forbole/juno/v6/cmd"
+	initcmd "github.com/forbole/juno/v6/cmd/init"
+	parsetypes "github.com/forbole/juno/v6/cmd/parse/types"
+	startcmd "github.com/forbole/juno/v6/cmd/start"
+	"github.com/forbole/juno/v6/modules/messages"
 
-	migratecmd "github.com/forbole/bdjuno/v3/cmd/migrate"
-	parsecmd "github.com/forbole/bdjuno/v3/cmd/parse"
+	migratecmd "github.com/forbole/callisto/v4/cmd/migrate"
+	parsecmd "github.com/forbole/callisto/v4/cmd/parse"
 
-	"github.com/forbole/bdjuno/v3/types/config"
+	"github.com/forbole/callisto/v4/types/config"
 
-	"github.com/forbole/bdjuno/v3/database"
-	"github.com/forbole/bdjuno/v3/modules"
-
-	gaiaapp "github.com/cosmos/gaia/v7/app"
-	firmachainapp "github.com/firmachain/firmachain/app"
+	"github.com/forbole/callisto/v4/database"
+	"github.com/forbole/callisto/v4/modules"
 )
 
 func main() {
 	initCfg := initcmd.NewConfig().
 		WithConfigCreator(config.Creator)
 
+	cdc := utils.GetCodec()
 	parseCfg := parsetypes.NewConfig().
-		WithDBBuilder(database.Builder).
-		WithEncodingConfigBuilder(config.MakeEncodingConfig(getBasicManagers())).
-		WithRegistrar(modules.NewRegistrar(getAddressesParser()))
+		WithDBBuilder(database.Builder(cdc)).
+		WithRegistrar(modules.NewRegistrar(getAddressesParser(), cdc))
 
-	cfg := cmd.NewConfig("bdjuno").
+	cfg := cmd.NewConfig("callisto").
 		WithInitConfig(initCfg).
 		WithParseConfig(parseCfg)
 
@@ -48,16 +45,6 @@ func main() {
 	err := executor.Execute()
 	if err != nil {
 		panic(err)
-	}
-}
-
-// getBasicManagers returns the various basic managers that are used to register the encoding to
-// support custom messages.
-// This should be edited by custom implementations if needed.
-func getBasicManagers() []module.BasicManager {
-	return []module.BasicManager{
-		gaiaapp.ModuleBasics,
-		firmachainapp.ModuleBasics,
 	}
 }
 

@@ -4,21 +4,21 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	parsecmdtypes "github.com/forbole/juno/v3/cmd/parse/types"
-	"github.com/forbole/juno/v3/types/config"
+	parsecmdtypes "github.com/forbole/juno/v6/cmd/parse/types"
+	"github.com/forbole/juno/v6/types/config"
 
-	"github.com/forbole/bdjuno/v3/modules/feegrant"
-	"github.com/forbole/bdjuno/v3/utils"
+	"github.com/forbole/callisto/v4/modules/feegrant"
+	"github.com/forbole/callisto/v4/utils"
 
 	"github.com/spf13/cobra"
 
-	"github.com/forbole/bdjuno/v3/database"
+	"github.com/forbole/callisto/v4/database"
 
 	"sort"
 
-	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
+	cmttypes "github.com/cometbft/cometbft/rpc/core/types"
 
-	feegranttypes "github.com/cosmos/cosmos-sdk/x/feegrant"
+	feegranttypes "cosmossdk.io/x/feegrant"
 	"github.com/rs/zerolog/log"
 )
 
@@ -37,11 +37,11 @@ func allowanceCmd(parseConfig *parsecmdtypes.Config) *cobra.Command {
 			db := database.Cast(parseCtx.Database)
 
 			// Build feegrant module
-			feegrantModule := feegrant.NewModule(parseCtx.EncodingConfig.Marshaler, db)
+			feegrantModule := feegrant.NewModule(utils.GetCodec(), db)
 
 			// Get the accounts
 			// Collect all the transactions
-			var txs []*tmctypes.ResultTx
+			var txs []*cmttypes.ResultTx
 
 			// Get all the MsgGrantAllowance txs
 			query := fmt.Sprintf("message.action='%s'", feegranttypes.EventTypeSetFeeGrant)
@@ -72,15 +72,15 @@ func allowanceCmd(parseConfig *parsecmdtypes.Config) *cobra.Command {
 				}
 
 				// Handle only the MsgGrantAllowance and MsgRevokeAllowance instances
-				for index, msg := range transaction.GetMsgs() {
-					_, isMsgGrantAllowance := msg.(*feegranttypes.MsgGrantAllowance)
-					_, isMsgRevokeAllowance := msg.(*feegranttypes.MsgRevokeAllowance)
+				for index, sdkmsg := range transaction.GetMsgs() {
+					_, isMsgGrantAllowance := sdkmsg.(*feegranttypes.MsgGrantAllowance)
+					_, isMsgRevokeAllowance := sdkmsg.(*feegranttypes.MsgRevokeAllowance)
 
 					if !isMsgGrantAllowance && !isMsgRevokeAllowance {
 						continue
 					}
 
-					err = feegrantModule.HandleMsg(index, msg, transaction)
+					err = feegrantModule.HandleMsg(index, transaction.Body.Messages[index], transaction)
 					if err != nil {
 						return fmt.Errorf("error while handling feegrant module message: %s", err)
 					}

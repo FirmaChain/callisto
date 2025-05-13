@@ -1,40 +1,45 @@
 package modules
 
 import (
-	"github.com/forbole/bdjuno/v3/modules/actions"
-	"github.com/forbole/bdjuno/v3/modules/types"
-
-	"github.com/forbole/juno/v3/modules/pruning"
-	"github.com/forbole/juno/v3/modules/telemetry"
-
-	"github.com/forbole/bdjuno/v3/modules/slashing"
-
 	"github.com/cosmos/cosmos-sdk/codec"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	jmodules "github.com/forbole/juno/v3/modules"
-	"github.com/forbole/juno/v3/modules/messages"
-	"github.com/forbole/juno/v3/modules/registrar"
 
-	"github.com/forbole/bdjuno/v3/utils"
+	"github.com/forbole/callisto/v4/modules/actions"
+	"github.com/forbole/callisto/v4/modules/types"
 
-	"github.com/forbole/bdjuno/v3/database"
-	"github.com/forbole/bdjuno/v3/modules/auth"
-	"github.com/forbole/bdjuno/v3/modules/bank"
-	"github.com/forbole/bdjuno/v3/modules/consensus"
-	"github.com/forbole/bdjuno/v3/modules/distribution"
-	"github.com/forbole/bdjuno/v3/modules/feegrant"
+	"github.com/forbole/juno/v6/modules/pruning"
+	"github.com/forbole/juno/v6/modules/telemetry"
 
-	"github.com/forbole/bdjuno/v3/modules/gov"
-	"github.com/forbole/bdjuno/v3/modules/mint"
-	"github.com/forbole/bdjuno/v3/modules/modules"
-	"github.com/forbole/bdjuno/v3/modules/pricefeed"
-	"github.com/forbole/bdjuno/v3/modules/staking"
+	"github.com/forbole/callisto/v4/modules/slashing"
+
+	jmodules "github.com/forbole/juno/v6/modules"
+	"github.com/forbole/juno/v6/modules/messages"
+	"github.com/forbole/juno/v6/modules/registrar"
+
+	"github.com/forbole/callisto/v4/utils"
+
+	"github.com/forbole/callisto/v4/database"
+	"github.com/forbole/callisto/v4/modules/auth"
+	"github.com/forbole/callisto/v4/modules/bank"
+	"github.com/forbole/callisto/v4/modules/consensus"
+	"github.com/forbole/callisto/v4/modules/distribution"
+	"github.com/forbole/callisto/v4/modules/feegrant"
+
+	dailyrefetch "github.com/forbole/callisto/v4/modules/daily_refetch"
+	juno "github.com/forbole/juno/v6/types"
+
+	"github.com/forbole/callisto/v4/modules/gov"
+	messagetype "github.com/forbole/callisto/v4/modules/message_type"
+	"github.com/forbole/callisto/v4/modules/mint"
+	"github.com/forbole/callisto/v4/modules/modules"
+	"github.com/forbole/callisto/v4/modules/pricefeed"
+	"github.com/forbole/callisto/v4/modules/staking"
+	"github.com/forbole/callisto/v4/modules/upgrade"
 )
 
 // UniqueAddressesParser returns a wrapper around the given parser that removes all duplicated addresses
 func UniqueAddressesParser(parser messages.MessageAddressesParser) messages.MessageAddressesParser {
-	return func(cdc codec.Codec, msg sdk.Msg) ([]string, error) {
-		addresses, err := parser(cdc, msg)
+	return func(tx *juno.Transaction) ([]string, error) {
+		addresses, err := parser(tx)
 		if err != nil {
 			return nil, err
 		}
@@ -52,38 +57,42 @@ var (
 // Registrar represents the modules.Registrar that allows to register all modules that are supported by BigDipper
 type Registrar struct {
 	parser messages.MessageAddressesParser
+	cdc    codec.Codec
 }
 
 // NewRegistrar allows to build a new Registrar instance
-func NewRegistrar(parser messages.MessageAddressesParser) *Registrar {
+func NewRegistrar(parser messages.MessageAddressesParser, cdc codec.Codec) *Registrar {
 	return &Registrar{
 		parser: UniqueAddressesParser(parser),
+		cdc:    cdc,
 	}
 }
 
 // BuildModules implements modules.Registrar
 func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
-	cdc := ctx.EncodingConfig.Marshaler
 	db := database.Cast(ctx.Database)
 
-	sources, err := types.BuildSources(ctx.JunoConfig.Node, ctx.EncodingConfig)
+	sources, err := types.BuildSources(ctx.JunoConfig.Node, r.cdc)
 	if err != nil {
 		panic(err)
 	}
 
-	actionsModule := actions.NewModule(ctx.JunoConfig, ctx.EncodingConfig)
-	authModule := auth.NewModule(r.parser, cdc, db)
-	bankModule := bank.NewModule(r.parser, sources.BankSource, cdc, db)
+	actionsModule := actions.NewModule(ctx.JunoConfig, r.cdc, sources)
+	authModule := auth.NewModule(r.parser, r.cdc, db)
+	bankModule := bank.NewModule(r.parser, sources.BankSource, r.cdc, db)
 	consensusModule := consensus.NewModule(db)
-	distrModule := distribution.NewModule(sources.DistrSource, cdc, db)
-	feegrantModule := feegrant.NewModule(cdc, db)
-	mintModule := mint.NewModule(sources.MintSource, cdc, db)
-	slashingModule := slashing.NewModule(sources.SlashingSource, cdc, db)
-	stakingModule := staking.NewModule(sources.StakingSource, slashingModule, cdc, db)
-	govModule := gov.NewModule(sources.GovSource, authModule, distrModule, mintModule, slashingModule, stakingModule, cdc, db)
+	dailyRefectModule := dailyrefetch.NewModule(ctx.Proxy, db)
+	distrModule := distribution.NewModule(sources.DistrSource, r.cdc, db)
+	feegrantModule := feegrant.NewModule(r.cdc, db)
+	messagetypeModule := messagetype.NewModule(r.parser, r.cdc, db)
+	mintModule := mint.NewModule(sources.MintSource, r.cdc, db)
+	slashingModule := slashing.NewModule(sources.SlashingSource, r.cdc, db)
+	stakingModule := staking.NewModule(sources.StakingSource, r.cdc, db)
+	govModule := gov.NewModule(sources.GovSource, distrModule, mintModule, slashingModule, stakingModule, r.cdc, db)
+	upgradeModule := upgrade.NewModule(db, stakingModule)
 
 	return []jmodules.Module{
-		messages.NewModule(r.parser, cdc, ctx.Database),
+		messages.NewModule(r.parser, ctx.Database),
 		telemetry.NewModule(ctx.JunoConfig),
 		pruning.NewModule(ctx.JunoConfig, db, ctx.Logger),
 
@@ -91,13 +100,16 @@ func (r *Registrar) BuildModules(ctx registrar.Context) jmodules.Modules {
 		authModule,
 		bankModule,
 		consensusModule,
+		dailyRefectModule,
 		distrModule,
 		feegrantModule,
 		govModule,
 		mintModule,
+		messagetypeModule,
 		modules.NewModule(ctx.JunoConfig.Chain, db),
-		pricefeed.NewModule(ctx.JunoConfig, cdc, db),
+		pricefeed.NewModule(ctx.JunoConfig, r.cdc, db),
 		slashingModule,
 		stakingModule,
+		upgradeModule,
 	}
 }

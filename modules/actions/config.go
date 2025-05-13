@@ -3,7 +3,7 @@ package actions
 import (
 	"fmt"
 
-	"github.com/forbole/juno/v3/node/remote"
+	"github.com/forbole/juno/v6/node/remote"
 	"gopkg.in/yaml.v3"
 )
 

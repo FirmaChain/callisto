@@ -1,10 +1,10 @@
 package modules
 
 import (
-	"github.com/forbole/juno/v3/modules"
-	"github.com/forbole/juno/v3/types/config"
+	"github.com/forbole/juno/v6/modules"
+	"github.com/forbole/juno/v6/types/config"
 
-	"github.com/forbole/bdjuno/v3/database"
+	"github.com/forbole/callisto/v4/database"
 )
 
 var (

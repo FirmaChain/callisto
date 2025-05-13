@@ -4,13 +4,12 @@ import (
 	"encoding/json"
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/forbole/bdjuno/v3/types"
+	"cosmossdk.io/math"
+	"github.com/forbole/callisto/v4/types"
 )
 
 // SaveInflation allows to store the inflation for the given block height as well as timestamp
-func (db *Db) SaveInflation(inflation sdk.Dec, height int64) error {
+func (db *Db) SaveInflation(inflation math.LegacyDec, height int64) error {
 	stmt := `
 INSERT INTO inflation (value, height) 
 VALUES ($1, $2) 
@@ -19,7 +18,7 @@ ON CONFLICT (one_row_id) DO UPDATE
         height = excluded.height 
 WHERE inflation.height <= excluded.height`
 
-	_, err := db.Sql.Exec(stmt, inflation.String(), height)
+	_, err := db.SQL.Exec(stmt, inflation.String(), height)
 	if err != nil {
 		return fmt.Errorf("error while storing inflation: %s", err)
 	}
@@ -42,7 +41,7 @@ ON CONFLICT (one_row_id) DO UPDATE
         height = excluded.height
 WHERE mint_params.height <= excluded.height`
 
-	_, err = db.Sql.Exec(stmt, string(paramsBz), params.Height)
+	_, err = db.SQL.Exec(stmt, string(paramsBz), params.Height)
 	if err != nil {
 		return fmt.Errorf("error while storing mint params: %s", err)
 	}

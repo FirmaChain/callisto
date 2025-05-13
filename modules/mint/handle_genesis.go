@@ -4,16 +4,16 @@ import (
 	"encoding/json"
 	"fmt"
 
-	tmtypes "github.com/tendermint/tendermint/types"
+	cmtypes "github.com/cometbft/cometbft/types"
 
-	"github.com/forbole/bdjuno/v3/types"
+	"github.com/forbole/callisto/v4/types"
 
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	"github.com/rs/zerolog/log"
 )
 
 // HandleGenesis implements modules.Module
-func (m *Module) HandleGenesis(doc *tmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
+func (m *Module) HandleGenesis(doc *cmtypes.GenesisDoc, appState map[string]json.RawMessage) error {
 	log.Debug().Str("module", "mint").Msg("parsing genesis")
 
 	// Read the genesis state

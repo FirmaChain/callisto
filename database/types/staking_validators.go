@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"strconv"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 )
 
 // ValidatorData contains all the data of a single validator.
@@ -55,22 +55,22 @@ func (v ValidatorData) GetSelfDelegateAddress() string {
 }
 
 // GetMaxChangeRate implements types.Validator
-func (v ValidatorData) GetMaxChangeRate() *sdk.Dec {
+func (v ValidatorData) GetMaxChangeRate() *math.LegacyDec {
 	n, err := strconv.ParseInt(v.MaxChangeRate, 10, 64)
 	if err != nil {
 		panic(err)
 	}
-	result := sdk.NewDec(n)
+	result := math.LegacyNewDec(n)
 	return &result
 }
 
 // GetMaxRate implements types.Validator
-func (v ValidatorData) GetMaxRate() *sdk.Dec {
+func (v ValidatorData) GetMaxRate() *math.LegacyDec {
 	n, err := strconv.ParseInt(v.MaxRate, 10, 64)
 	if err != nil {
 		panic(err)
 	}
-	result := sdk.NewDec(n)
+	result := math.LegacyNewDec(n)
 	return &result
 }
 
@@ -239,17 +239,15 @@ func (v ValidatorVotingPowerRow) Equal(w ValidatorVotingPowerRow) bool {
 type ValidatorStatusRow struct {
 	Status      int    `db:"status"`
 	Jailed      bool   `db:"jailed"`
-	Tombstoned  bool   `db:"tombstoned"`
 	ConsAddress string `db:"validator_address"`
 	Height      int64  `db:"height"`
 }
 
 // NewValidatorStatusRow builds a new ValidatorStatusRow
-func NewValidatorStatusRow(status int, jailed bool, tombstoned bool, consAddess string, height int64) ValidatorStatusRow {
+func NewValidatorStatusRow(status int, jailed bool, consAddess string, height int64) ValidatorStatusRow {
 	return ValidatorStatusRow{
 		Status:      status,
 		Jailed:      jailed,
-		Tombstoned:  tombstoned,
 		ConsAddress: consAddess,
 		Height:      height,
 	}
@@ -259,7 +257,6 @@ func NewValidatorStatusRow(status int, jailed bool, tombstoned bool, consAddess 
 func (v ValidatorStatusRow) Equal(w ValidatorStatusRow) bool {
 	return v.Status == w.Status &&
 		v.Jailed == w.Jailed &&
-		v.Tombstoned == w.Tombstoned &&
 		v.ConsAddress == w.ConsAddress &&
 		v.Height == w.Height
 }

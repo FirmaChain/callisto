@@ -3,15 +3,15 @@ package slashing
 import (
 	"fmt"
 
-	juno "github.com/forbole/juno/v3/types"
+	juno "github.com/forbole/juno/v6/types"
 
+	cmttypes "github.com/cometbft/cometbft/rpc/core/types"
 	"github.com/rs/zerolog/log"
-	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 // HandleBlock implements BlockModule
 func (m *Module) HandleBlock(
-	block *tmctypes.ResultBlock, results *tmctypes.ResultBlockResults, _ []*juno.Tx, _ *tmctypes.ResultValidators,
+	block *cmttypes.ResultBlock, results *cmttypes.ResultBlockResults, _ []*juno.Transaction, _ *cmttypes.ResultValidators,
 ) error {
 	// Update the signing infos
 	err := m.updateSigningInfo(block.Block.Height)

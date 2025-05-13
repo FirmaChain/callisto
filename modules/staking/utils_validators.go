@@ -4,13 +4,12 @@ import (
 	"fmt"
 	"strings"
 
+	cmttypes "github.com/cometbft/cometbft/rpc/core/types"
 	"google.golang.org/grpc/codes"
 
-	juno "github.com/forbole/juno/v3/types"
-	tmctypes "github.com/tendermint/tendermint/rpc/core/types"
-
-	"github.com/forbole/bdjuno/v3/modules/staking/keybase"
-	"github.com/forbole/bdjuno/v3/types"
+	"github.com/forbole/callisto/v4/modules/staking/keybase"
+	"github.com/forbole/callisto/v4/types"
+	juno "github.com/forbole/juno/v6/types"
 
 	"github.com/rs/zerolog/log"
 
@@ -38,7 +37,7 @@ func (m *Module) getValidatorConsAddr(validator stakingtypes.Validator) (sdk.Con
 
 // ---------------------------------------------------------------------------------------------------------------------
 
-// ConvertValidator converts the given staking validator into a BDJuno validator
+// ConvertValidator converts the given staking validator into a Callisto validator
 func (m *Module) convertValidator(height int64, validator stakingtypes.Validator) (types.Validator, error) {
 	consAddr, err := m.getValidatorConsAddr(validator)
 	if err != nil {
@@ -50,11 +49,24 @@ func (m *Module) convertValidator(height int64, validator stakingtypes.Validator
 		return nil, fmt.Errorf("error while getting validator consensus pub key: %s", err)
 	}
 
+	// we need to do some magic to get the proper self delegate address
+	bz, err := sdk.GetFromBech32(validator.GetOperator(), sdk.GetConfig().GetBech32ValidatorAddrPrefix())
+	if err != nil {
+		return nil, fmt.Errorf("cannot convert operator to self delegate addr: %s", err)
+	}
+
+	err = sdk.VerifyAddressFormat(bz)
+	if err != nil {
+		return nil, fmt.Errorf("cannot convert operator to self delegate addr: %s", err)
+	}
+
+	selfAddr := sdk.AccAddress(bz)
+
 	return types.NewValidator(
 		consAddr.String(),
 		validator.OperatorAddress,
 		consPubKey.String(),
-		sdk.AccAddress(validator.GetOperator()).String(),
+		selfAddr.String(),
 		&validator.Commission.MaxChangeRate,
 		&validator.Commission.MaxRate,
 		height,
@@ -82,6 +94,25 @@ func (m *Module) convertValidatorDescription(
 }
 
 // --------------------------------------------------------------------------------------------------------------------
+
+// RefreshAllValidatorInfos refreshes the info of all the validators at the given height
+func (m *Module) RefreshAllValidatorInfos(height int64) error {
+	// Get all validators
+	validators, err := m.source.GetValidatorsWithStatus(height, "")
+	if err != nil {
+		return fmt.Errorf("error while getting validators: %s", err)
+	}
+
+	// Refresh each validator
+	for _, validator := range validators {
+		err = m.RefreshValidatorInfos(height, validator.OperatorAddress)
+		if err != nil {
+			return fmt.Errorf("error while refreshing validator: %s", err)
+		}
+	}
+
+	return nil
+}
 
 // RefreshValidatorInfos refreshes the info for the validator with the given operator address at the provided height
 func (m *Module) RefreshValidatorInfos(height int64, valOper string) error {
@@ -176,17 +207,11 @@ func (m *Module) GetValidatorsStatuses(height int64, validators []stakingtypes.V
 			return nil, fmt.Errorf("error while getting validator consensus public key: %s", err)
 		}
 
-		valSigningInfo, err := m.slashingModule.GetSigningInfo(height, consAddr)
-		if err != nil && !strings.Contains(err.Error(), codes.NotFound.String()) {
-			return nil, fmt.Errorf("error while getting validator signing info: %s", err)
-		}
-
 		statuses[index] = types.NewValidatorStatus(
 			consAddr.String(),
 			consPubKey.String(),
 			int(validator.GetStatus()),
 			validator.IsJailed(),
-			valSigningInfo.Tombstoned,
 			height,
 		)
 	}
@@ -194,7 +219,7 @@ func (m *Module) GetValidatorsStatuses(height int64, validators []stakingtypes.V
 	return statuses, nil
 }
 
-func (m *Module) GetValidatorsVotingPowers(height int64, vals *tmctypes.ResultValidators) ([]types.ValidatorVotingPower, error) {
+func (m *Module) GetValidatorsVotingPowers(height int64, vals *cmttypes.ResultValidators) ([]types.ValidatorVotingPower, error) {
 	stakingVals, _, err := m.getValidators(height)
 	if err != nil {
 		return nil, err
@@ -212,17 +237,139 @@ func (m *Module) GetValidatorsVotingPowers(height int64, vals *tmctypes.ResultVa
 		var votingPower int64 = 0
 		for _, blockVal := range vals.Validators {
 			blockValConsAddr := juno.ConvertValidatorAddressToBech32String(blockVal.Address)
-			if blockValConsAddr == consAddr.String() {
+			if blockValConsAddr == string(consAddr) {
 				votingPower = blockVal.VotingPower
 			}
+		}
+
+		if found, _ := m.db.HasValidator(string(consAddr)); !found {
+			continue
+		}
+
+		votingPowers[index] = types.NewValidatorVotingPower(string(consAddr), votingPower, height)
+	}
+
+	return votingPowers, nil
+}
+
+// UpdateValidatorStatuses allows to update validators status, voting power
+// and active proposals validator status snapshots
+func (m *Module) UpdateValidatorStatuses() error {
+	// get the latest block height from db
+	block, err := m.db.GetLastBlockHeightAndTimestamp()
+	if err != nil {
+		return fmt.Errorf("error while getting latest block height from db: %s", err)
+	}
+
+	validators, _, err := m.GetValidatorsWithStatus(block.Height, stakingtypes.Bonded.String())
+	if err != nil {
+		return fmt.Errorf("error while getting validators with bonded status: %s", err)
+	}
+
+	// update validators status and voting power in database
+	err = m.updateValidatorStatusAndVP(block.Height, validators)
+	if err != nil {
+		return fmt.Errorf("error while updating validators status and voting power: %s", err)
+	}
+
+	// get all active proposals IDs from db
+	ids, err := m.db.GetOpenProposalsIds(block.BlockTimestamp)
+	if err != nil {
+		return fmt.Errorf("error while getting open proposals ids: %s", err)
+	}
+
+	// update validator status snapshots for all proposals IDs
+	// returned from database
+	for _, id := range ids {
+		// update validator status snapshot for given height and proposal ID
+		err = m.updateProposalValidatorStatusSnapshot(block.Height, id, validators)
+		if err != nil {
+			return fmt.Errorf("error while updating proposal validator status snapshots: %s", err)
+		}
+	}
+
+	return nil
+}
+
+// updateProposalValidatorStatusSnapshot updates validators snapshot for
+// the proposal having the given id
+func (m *Module) updateProposalValidatorStatusSnapshot(
+	height int64, proposalID uint64, validators []stakingtypes.Validator) error {
+	snapshots := make([]types.ProposalValidatorStatusSnapshot, len(validators))
+
+	for index, validator := range validators {
+		consAddr, err := m.getValidatorConsAddr(validator)
+		if err != nil {
+			return err
+		}
+
+		snapshots[index] = types.NewProposalValidatorStatusSnapshot(
+			proposalID,
+			consAddr.String(),
+			validator.Tokens.Int64(),
+			validator.Status,
+			validator.Jailed,
+			height,
+		)
+	}
+
+	log.Debug().Str("module", "staking").Msg("refreshing proposal validator statuses snapshots")
+
+	return m.db.SaveProposalValidatorsStatusesSnapshots(snapshots)
+}
+
+// updateValidatorStatusAndVP updates validators status
+// and validators voting power
+func (m *Module) updateValidatorStatusAndVP(height int64, validators []stakingtypes.Validator) error {
+	votingPowers := make([]types.ValidatorVotingPower, len(validators))
+	statuses := make([]types.ValidatorStatus, len(validators))
+
+	for index, validator := range validators {
+		consAddr, err := m.getValidatorConsAddr(validator)
+		if err != nil && !strings.Contains(err.Error(), codes.NotFound.String()) {
+			return fmt.Errorf("error while getting validator signing info: %s", err)
+		}
+
+		if err != nil {
+			return err
 		}
 
 		if found, _ := m.db.HasValidator(consAddr.String()); !found {
 			continue
 		}
 
-		votingPowers[index] = types.NewValidatorVotingPower(consAddr.String(), votingPower, height)
+		consPubKey, err := m.getValidatorConsPubKey(validator)
+		if err != nil {
+			return err
+		}
+
+		votingPowers[index] = types.NewValidatorVotingPower(consAddr.String(), validator.Tokens.Int64(), height)
+
+		statuses[index] = types.NewValidatorStatus(
+			consAddr.String(),
+			consPubKey.String(),
+			int(validator.GetStatus()),
+			validator.IsJailed(),
+			height,
+		)
 	}
 
-	return votingPowers, nil
+	log.Debug().Str("module", "staking").Msg("refreshing validator voting power")
+	// Save validators voting powers in db
+	err := m.db.SaveValidatorsVotingPowers(votingPowers)
+	if err != nil {
+		log.Error().Str("module", "staking").Err(err).Int64("height", height).
+			Msg("error while saving validators voting powers")
+	}
+
+	log.Debug().Str("module", "staking").Msg("refreshing validator statuses")
+	// Save validators statuses in db
+	err = m.db.SaveValidatorsStatuses(statuses)
+	if err != nil {
+		log.Error().Str("module", "staking").Err(err).
+			Int64("height", height).
+			Msg("error while saving validators statuses")
+	}
+
+	return nil
 }
