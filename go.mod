@@ -1,6 +1,6 @@
 module github.com/forbole/callisto/v4
 
-go 1.24
+go 1.23
 
 require (
 	cosmossdk.io/log v1.5.0
