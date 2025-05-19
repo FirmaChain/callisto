@@ -2,6 +2,8 @@ package v5
 
 import (
 	"fmt"
+	"log"
+	"os"
 
 	utils "github.com/forbole/callisto/v4/modules/utils"
 	"github.com/forbole/callisto/v4/types"
@@ -26,6 +28,15 @@ func (db *Migrator) Migrate() error {
 			return err
 		}
 	}
+	sqlBytes, err := os.ReadFile("migrations/your_file.sql")
+	if err != nil {
+		log.Fatalf("Failed to read SQL file: %v", err)
+	}
+
+	err = db.migrateDbSchema(string(sqlBytes))
+	if err != nil {
+		log.Fatalf("Migration failed: %v", err)
+	}
 	return nil
 }
 
@@ -37,17 +48,31 @@ func (db *Migrator) getMsgTypesFromMessageTable() ([]MessageRow, error) {
 	if err != nil {
 		return nil, err
 	}
-
 	return rows, nil
 }
 
 // migrateMsgTypes stores the given message type inside the database
 func (db *Migrator) migrateMsgTypes(msg *types.MessageType) error {
 	stmt := `
+CREATE TABLE message_type
+(
+    type      TEXT   NOT NULL UNIQUE,
+    module    TEXT   NOT NULL,
+    label     TEXT   NOT NULL,
+    height    BIGINT NOT NULL
+);
+CREATE INDEX message_type_module_index ON message_type (module);
+CREATE INDEX message_type_type_index ON message_type (type);
+
 INSERT INTO message_type(type, module, label, height) 
 VALUES ($1, $2, $3, $4) 
-ON CONFLICT (type) DO NOTHING`
+ON CONFLICT (type) DO NOTHING;`
 
 	_, err := db.SQL.Exec(stmt, msg.Type, msg.Module, msg.Label, msg.Height)
+	return err
+}
+
+func (db *Migrator) migrateDbSchema(migrateSQL string) error {
+	_, err := db.SQL.Exec(migrateSQL)
 	return err
 }

@@ -8,7 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	v3 "github.com/forbole/callisto/v4/cmd/migrate/v3"
-	v6 "github.com/forbole/callisto/v4/cmd/migrate/v5"
+	v5 "github.com/forbole/callisto/v4/cmd/migrate/v5"
 )
 
 type Migrator func(parseCfg *parsecmdtypes.Config) error
@@ -16,7 +16,7 @@ type Migrator func(parseCfg *parsecmdtypes.Config) error
 var (
 	migrations = map[string]Migrator{
 		"v3": v3.RunMigration,
-		"v6": v6.RunMigration,
+		"v5": v5.RunMigration,
 	}
 )
 
