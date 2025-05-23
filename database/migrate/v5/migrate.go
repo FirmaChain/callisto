@@ -28,11 +28,13 @@ func (db *Migrator) Migrate() error {
 			return err
 		}
 	}
-	sqlBytes, err := os.ReadFile("migrations/your_file.sql")
+	// read the sql migration file
+	sqlBytes, err := os.ReadFile("database/migrate/v5/migrationv5.sql")
 	if err != nil {
 		log.Fatalf("Failed to read SQL file: %v", err)
 	}
 
+	// execute scripts
 	err = db.migrateDbSchema(string(sqlBytes))
 	if err != nil {
 		log.Fatalf("Migration failed: %v", err)
@@ -53,22 +55,31 @@ func (db *Migrator) getMsgTypesFromMessageTable() ([]MessageRow, error) {
 
 // migrateMsgTypes stores the given message type inside the database
 func (db *Migrator) migrateMsgTypes(msg *types.MessageType) error {
-	stmt := `
-CREATE TABLE message_type
-(
-    type      TEXT   NOT NULL UNIQUE,
-    module    TEXT   NOT NULL,
-    label     TEXT   NOT NULL,
-    height    BIGINT NOT NULL
-);
-CREATE INDEX message_type_module_index ON message_type (module);
-CREATE INDEX message_type_type_index ON message_type (type);
+	// Step 1: Create the table and indexes (no parameters, can be run as plain exec)
+	schemaStmt := `
+	CREATE TABLE IF NOT EXISTS message_type
+	(
+		type      TEXT   NOT NULL UNIQUE,
+		module    TEXT   NOT NULL,
+		label     TEXT   NOT NULL,
+		height    BIGINT NOT NULL
+	);
+	CREATE INDEX IF NOT EXISTS message_type_module_index ON message_type (module);
+	CREATE INDEX IF NOT EXISTS message_type_type_index ON message_type (type);
+	`
 
-INSERT INTO message_type(type, module, label, height) 
-VALUES ($1, $2, $3, $4) 
-ON CONFLICT (type) DO NOTHING;`
+	_, err := db.SQL.Exec(schemaStmt)
+	if err != nil {
+		return err
+	}
 
-	_, err := db.SQL.Exec(stmt, msg.Type, msg.Module, msg.Label, msg.Height)
+	// Step 2: Insert the message type (with parameters)
+	insertStmt := `
+	INSERT INTO message_type(type, module, label, height) 
+	VALUES ($1, $2, $3, $4) 
+	ON CONFLICT (type) DO NOTHING;`
+
+	_, err = db.SQL.Exec(insertStmt, msg.Type, msg.Module, msg.Label, msg.Height)
 	return err
 }
 

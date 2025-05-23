@@ -9,103 +9,73 @@ autovacuum_vacuum_threshold = 10000,
 autovacuum_analyze_threshold = 10000
 );
 
-/* transaction -> transaction partitioned */
-ALTER TABLE transaction RENAME TO transaction_before_050;
+/* transaction */
+-- Add new column to the parent transaction table
+ALTER TABLE transaction
+ADD COLUMN events JSONB NOT NULL DEFAULT '[]'::JSONB;
 
-CREATE TABLE transaction (
-    hash         TEXT    NOT NULL,
-    height       BIGINT  NOT NULL REFERENCES block (height),
-    success      BOOLEAN NOT NULL,
-    messages     JSON   NOT NULL DEFAULT '[]'::JSON,
-    memo         TEXT,
-    signatures   TEXT[]  NOT NULL,
-    signer_infos JSONB   NOT NULL DEFAULT '[]'::JSONB,
-    fee          JSONB   NOT NULL DEFAULT '{}'::JSONB,
-    gas_wanted   BIGINT           DEFAULT 0,
-    gas_used     BIGINT           DEFAULT 0,
-    raw_log      TEXT,
-    logs         JSONB,
-    events       JSONB NOT NULL DEFAULT '[]'::JSONB,
-    partition_id BIGINT  NOT NULL DEFAULT 0,
+-- Change messages column type to JSON in the parent transaction table
+ALTER TABLE transaction
+ALTER COLUMN messages DROP DEFAULT,
+ALTER COLUMN messages TYPE JSON USING messages::JSON,
+ALTER COLUMN messages SET DEFAULT '[]'::JSON;
 
-    CONSTRAINT unique_tx UNIQUE (hash, partition_id)
-) PARTITION BY LIST(partition_id);
-
-CREATE INDEX transaction_hash_index ON transaction (hash);
-CREATE INDEX transaction_height_index ON transaction (height);
-CREATE INDEX transaction_partition_id_index ON transaction (partition_id);
-
-CREATE TABLE transaction_0 PARTITION OF transaction
-FOR VALUES IN (0);
-
-INSERT INTO transaction (
-    hash, height, success, messages, memo, signatures,
-    signer_infos, fee, gas_wanted, gas_used, raw_log, logs,
-    events, partition_id
+-- Add new column to the child transaction tables
+SELECT format(
+  'ALTER TABLE %I ADD COLUMN events JSONB NOT NULL DEFAULT ''[]''::JSONB;',
+  relname
 )
-SELECT
-    hash,
-    height,
-    success,
-    messages::JSON,
-    memo,
-    signatures,
-    signer_infos,
-    fee,
-    gas_wanted,
-    gas_used,
-    raw_log,
-    logs,
-    '[]'::JSONB, -- Check if it is a new column
-    0            -- defualt value
-FROM transaction_old;
+FROM pg_class
+WHERE relname LIKE 'transaction_%' AND relkind = 'r';
 
-/* Create message_type table MOVED IN migrateMsgTypes function
-CREATE TABLE message_type
-(
-    type      TEXT   NOT NULL UNIQUE,
-    module    TEXT   NOT NULL,
-    label     TEXT   NOT NULL,
-    height    BIGINT NOT NULL
-);
-CREATE INDEX message_type_module_index ON message_type (module);
-CREATE INDEX message_type_type_index ON message_type (type); */
-
-/* message -> message partitioned */
-ALTER TABLE message RENAME TO message_old;
-
-CREATE TABLE message (
-    transaction_hash             TEXT   NOT NULL,
-    index                        BIGINT NOT NULL,
-    type                         TEXT   NOT NULL REFERENCES message_type(type),
-    value                        JSON   NOT NULL,
-    involved_accounts_addresses  TEXT[] NOT NULL,
-    partition_id                 BIGINT NOT NULL DEFAULT 0,
-    height                       BIGINT NOT NULL,
-    FOREIGN KEY (transaction_hash, partition_id) REFERENCES transaction (hash, partition_id),
-    CONSTRAINT unique_message_per_tx UNIQUE (transaction_hash, index, partition_id)
-) PARTITION BY LIST(partition_id);
-
-CREATE TABLE message_0 PARTITION OF message
-FOR VALUES IN (0);
-
-CREATE INDEX message_transaction_hash_index ON message (transaction_hash);
-CREATE INDEX message_type_index ON message (type);
-CREATE INDEX message_involved_accounts_index ON message USING GIN(involved_accounts_addresses);
-
-INSERT INTO message (
-    transaction_hash, index, type, value,
-    involved_accounts_addresses, partition_id, height
+-- Change messages column type to JSON in the child transaction tables
+SELECT format(
+  $$
+  ALTER TABLE %I
+  ALTER COLUMN messages DROP DEFAULT,
+  ALTER COLUMN messages TYPE JSON USING messages::JSON,
+  ALTER COLUMN messages SET DEFAULT '[]'::JSON;
+  $$,
+  relname
 )
-SELECT
-    m.transaction_hash,
-    m.index,
-    m.type,
-    m.value::JSON,
-    COALESCE(m.involved_accounts_addresses, ARRAY[]::TEXT[]),
-    t.partition_id,
-    t.height
-FROM message_old m;
+FROM pg_class
+WHERE relname LIKE 'transaction_%' AND relkind = 'r';
+
+/* message */
+-- Change value column from JSONB to JSON
+ALTER TABLE message
+ALTER COLUMN value DROP DEFAULT,
+ALTER COLUMN value TYPE JSON USING value::JSON;
+
+-- Add foreign key to message_type(type)
+ALTER TABLE message
+ADD CONSTRAINT message_type_fk
+FOREIGN KEY (type) REFERENCES message_type(type);
+
+-- Alter child message tables
+DO $$
+DECLARE
+    r RECORD;
+BEGIN
+    FOR r IN
+        SELECT inhrelid::regclass AS partition_name
+        FROM pg_inherits
+        WHERE inhparent = 'message'::regclass
+    LOOP
+        RAISE NOTICE 'Altering partition: %', r.partition_name;
+
+        -- Add FK constraint on type column
+        EXECUTE format(
+            'ALTER TABLE %I
+             ADD CONSTRAINT %I
+             FOREIGN KEY (type) REFERENCES message_type(type);',
+            r.partition_name,
+            r.partition_name || '_type_fk'
+        );
+    END LOOP;
+END
+$$;
+
 
 /* new message_by_address function */
 DROP FUNCTION IF EXISTS messages_by_address(
@@ -140,32 +110,6 @@ WHERE (cardinality(types) = 0 OR type = ANY (types))
 ORDER BY height DESC LIMIT "limit" OFFSET "offset" 
 $$ LANGUAGE sql STABLE;
 
-
-/*######################### auth.sql ##########################*/
-/* Create table vesting_account */
-CREATE TABLE vesting_account
-(
-    id                  SERIAL                          PRIMARY KEY NOT NULL,
-    type                TEXT                            NOT NULL,
-    address             TEXT                            NOT NULL REFERENCES account (address),
-    original_vesting    COIN[]                          NOT NULL DEFAULT '{}',
-    end_time            TIMESTAMP WITHOUT TIME ZONE     NOT NULL,
-    start_time          TIMESTAMP WITHOUT TIME ZONE
-);
-
-CREATE UNIQUE INDEX vesting_account_address_idx ON vesting_account (address);
-
-/* Create table vesting_period */
-
-CREATE TABLE vesting_period
-(
-    vesting_account_id  BIGINT  NOT NULL REFERENCES vesting_account (id),
-    period_order        BIGINT  NOT NULL,
-    length              BIGINT  NOT NULL,
-    amount              COIN[]  NOT NULL DEFAULT '{}'
-);
-
--- Can table ACCOUNT_BALANCE be eliminated?
 
 /*######################### staking.sql ##########################*/
 /* Add column to table vesting_account */
