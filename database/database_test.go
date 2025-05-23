@@ -42,10 +42,9 @@ type DbTestSuite struct {
 }
 
 func (suite *DbTestSuite) SetupTest() {
-
 	// Build the database
 	dbCfg := dbconfig.NewDatabaseConfig(
-		"postgresql://bdjuno:password@localhost:6433/bdjuno?sslmode=disable&search_path=public", //TODO: check if ok
+		"postgresql://callisto:password@localhost:6433/callisto?sslmode=disable&search_path=public", //TODO: check if ok
 		"false",
 		"",
 		"",
@@ -58,6 +57,7 @@ func (suite *DbTestSuite) SetupTest() {
 
 	db, err := database.Builder(utils.GetCodec())(junodb.NewContext(dbCfg, logging.DefaultLogger()))
 	suite.Require().NoError(err)
+
 	bigDipperDb, ok := (db).(*database.Db)
 	suite.Require().True(ok)
 
