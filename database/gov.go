@@ -101,7 +101,7 @@ func (db *Db) SaveProposals(proposals []types.Proposal) error {
 
 	proposalsQuery := `
 INSERT INTO proposal(
-	id, title, description, metadata, content, proposer_address, status, 
+	id, title, description, metadata, content, proposal_type, proposer_address, status, 
     submit_time, deposit_end_time, voting_start_time, voting_end_time
 ) VALUES`
 	var proposalsParams []interface{}
@@ -112,16 +112,29 @@ INSERT INTO proposal(
 
 		// Prepare the proposal query
 		vi := i * 11
-		proposalsQuery += fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d),",
-			vi+1, vi+2, vi+3, vi+4, vi+5, vi+6, vi+7, vi+8, vi+9, vi+10, vi+11)
-
+		proposalsQuery += fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d),",
+			vi+1, vi+2, vi+3, vi+4, vi+5, vi+6, vi+7, vi+8, vi+9, vi+10, vi+11, vi+12)
+		var proposalType string
 		var jsonMessages []string
+
 		for _, msg := range proposal.Messages {
 			contentBz, err := db.cdc.MarshalJSON(msg)
 			if err != nil {
 				return fmt.Errorf("error while marshalling proposal msg: %s", err)
 			}
 			jsonMessages = append(jsonMessages, string(contentBz))
+
+			if proposalType == "" {
+				var msgMap map[string]interface{}
+				if err := json.Unmarshal(contentBz, &msgMap); err != nil {
+					return fmt.Errorf("error unmarshalling proposal msg for type extraction: %s", err)
+				}
+				if t, ok := msgMap["@type"].(string); ok {
+					proposalType = t
+				} else {
+					proposalType = ""
+				}
+			}
 		}
 
 		proposalsParams = append(proposalsParams,
@@ -130,6 +143,7 @@ INSERT INTO proposal(
 			proposal.Summary,
 			proposal.Metadata,
 			fmt.Sprintf("[%s]", strings.Join(jsonMessages, ",")),
+			proposalType,
 			proposal.Proposer,
 			proposal.Status,
 			proposal.SubmitTime,
