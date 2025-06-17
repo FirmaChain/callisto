@@ -134,8 +134,7 @@ DROP COLUMN    tally_params;
 
 /* Drop columns from table proposal */
 ALTER TABLE proposal
-DROP COLUMN    proposal_route,
-DROP COLUMN    proposal_type;
+DROP COLUMN    proposal_route;
 
 /* Add column to table proposal */
 ALTER TABLE proposal

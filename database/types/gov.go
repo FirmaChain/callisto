@@ -20,6 +20,7 @@ type ProposalRow struct {
 	Description     string       `db:"description"`
 	Metadata        string       `db:"metadata"`
 	Content         string       `db:"content"`
+	ProposalType    string       `db:"proposal_type"`
 	ProposalID      uint64       `db:"id"`
 	SubmitTime      time.Time    `db:"submit_time"`
 	DepositEndTime  time.Time    `db:"deposit_end_time"`
@@ -36,6 +37,7 @@ func NewProposalRow(
 	description string,
 	metadata string,
 	content string,
+	proposalType string,
 	submitTime time.Time,
 	depositEndTime time.Time,
 	votingStartTime *time.Time,
@@ -49,6 +51,7 @@ func NewProposalRow(
 		Description:     description,
 		Metadata:        metadata,
 		Content:         content,
+		ProposalType:    proposalType,
 		Status:          status,
 		SubmitTime:      submitTime,
 		DepositEndTime:  depositEndTime,
@@ -64,6 +67,7 @@ func (w ProposalRow) Equals(v ProposalRow) bool {
 		w.Description == v.Description &&
 		w.Metadata == v.Metadata &&
 		w.Content == v.Content &&
+		w.ProposalType == v.ProposalType &&
 		w.ProposalID == v.ProposalID &&
 		w.SubmitTime.Equal(v.SubmitTime) &&
 		w.DepositEndTime.Equal(v.DepositEndTime) &&
