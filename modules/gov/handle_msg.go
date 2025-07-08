@@ -26,6 +26,7 @@ var msgFilter = map[string]bool{
 	"/cosmos.gov.v1.MsgDeposit":        true,
 	"/cosmos.gov.v1.MsgVote":           true,
 	"/cosmos.gov.v1.MsgVoteWeighted":   true,
+	"/cosmos.gov.v1.MsgCancelProposal": true,
 
 	"/cosmos.gov.v1beta1.MsgSubmitProposal": true,
 	"/cosmos.gov.v1beta1.MsgDeposit":        true,
@@ -53,11 +54,11 @@ func (m *Module) HandleMsg(index int, msg juno.Message, tx *juno.Transaction) er
 		return m.handleSubmitProposalEvent(tx, cosmosMsg.Proposer, eventutils.FindEventsByMsgIndex(sdk.StringifyEvents(tx.Events), index))
 	case "/cosmos.gov.v1beta1.MsgSubmitProposal":
 		cosmosMsg := utils.UnpackMessage(m.cdc, msg.GetBytes(), &govtypesv1beta1.MsgSubmitProposal{})
-		
+
 		// Legacy proposal have raw log filled, and no msg_index inside the events.
-		if (tx.RawLog  != "" && len(tx.Logs) > 0) {
+		if tx.RawLog != "" && len(tx.Logs) > 0 {
 			events := tx.Logs[index].Events
-			return m.handleSubmitProposalEvent(tx, cosmosMsg.Proposer, events);
+			return m.handleSubmitProposalEvent(tx, cosmosMsg.Proposer, events)
 		}
 
 		return m.handleSubmitProposalEvent(tx, cosmosMsg.Proposer, eventutils.FindEventsByMsgIndex(sdk.StringifyEvents(tx.Events), index))
@@ -81,8 +82,11 @@ func (m *Module) HandleMsg(index int, msg juno.Message, tx *juno.Transaction) er
 		return m.handleVoteEvent(tx, cosmosMsg.Voter, eventutils.FindEventsByMsgIndex(sdk.StringifyEvents(tx.Events), index))
 	case "/cosmos.gov.v1beta1.MsgVoteWeighted":
 		cosmosMsg := utils.UnpackMessage(m.cdc, msg.GetBytes(), &govtypesv1beta1.MsgVoteWeighted{})
-
 		return m.handleVoteEvent(tx, cosmosMsg.Voter, eventutils.FindEventsByMsgIndex(sdk.StringifyEvents(tx.Events), index))
+
+	case "/cosmos.gov.v1.MsgCancelProposal":
+		cosmosMsg := utils.UnpackMessage(m.cdc, msg.GetBytes(), &govtypesv1.MsgCancelProposal{})
+		return m.handleCancelProposalEvent(tx, cosmosMsg.ProposalId, eventutils.FindEventsByMsgIndex(sdk.StringifyEvents(tx.Events), index))
 	}
 
 	return nil
@@ -219,4 +223,25 @@ func (m *Module) handleVoteEvent(tx *juno.Transaction, voter string, events sdk.
 
 	// update tally result for given proposal
 	return m.UpdateProposalTallyResult(proposalID, int64(tx.Height))
+}
+
+// handleCancelProposalEvent handle the removing of proposal and the index reset
+func (m *Module) handleCancelProposalEvent(tx *juno.Transaction, proposalID uint64, _ sdk.StringEvents) error {
+	// Check if cancelProposal transaction had success
+	// We read this information from success' column in transactions' table
+
+	var success bool
+	row := m.db.SQL.QueryRow(`SELECT success FROM transaction WHERE hash = $1`, tx.TxHash)
+	err := row.Scan(&success)
+	if err != nil {
+		return fmt.Errorf("error while checking transaction success: %s", err)
+	}
+	if success {
+		err := m.db.DeleteProposalAndRelated(proposalID)
+
+		if err != nil {
+			return fmt.Errorf("error while deleting proposal and related data: %s", err)
+		}
+	}
+	return nil
 }

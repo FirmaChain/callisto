@@ -490,3 +490,43 @@ func (db *Db) TruncateSoftwareUpgradePlan(height int64) error {
 
 	return nil
 }
+
+// DeleteProposalAndRelated delete a proposal and its related rows
+func (db *Db) DeleteProposalAndRelated(proposalID uint64) error {
+	// Delete software upgrade plan
+	_, err := db.SQL.Exec(`DELETE FROM software_upgrade_plan WHERE proposal_id = $1`, proposalID)
+	if err != nil {
+		return fmt.Errorf("error while deleting software_upgrade_plan: %s", err)
+	}
+	// Delete proposal_validator_status_snapshot
+	_, err = db.SQL.Exec(`DELETE FROM proposal_validator_status_snapshot WHERE proposal_id = $1`, proposalID)
+	if err != nil {
+		return fmt.Errorf("error while deleting proposal_validator_status_snapshot: %s", err)
+	}
+	// Delete proposal_staking_pool_snapshot
+	_, err = db.SQL.Exec(`DELETE FROM proposal_staking_pool_snapshot WHERE proposal_id = $1`, proposalID)
+	if err != nil {
+		return fmt.Errorf("error while deleting proposal_staking_pool_snapshot: %s", err)
+	}
+	// Delete proposal_tally_result
+	_, err = db.SQL.Exec(`DELETE FROM proposal_tally_result WHERE proposal_id = $1`, proposalID)
+	if err != nil {
+		return fmt.Errorf("error while deleting proposal_tally_result: %s", err)
+	}
+	// Delete proposal_vote
+	_, err = db.SQL.Exec(`DELETE FROM proposal_vote WHERE proposal_id = $1`, proposalID)
+	if err != nil {
+		return fmt.Errorf("error while deleting proposal_vote: %s", err)
+	}
+	// Delete proposal_deposit
+	_, err = db.SQL.Exec(`DELETE FROM proposal_deposit WHERE proposal_id = $1`, proposalID)
+	if err != nil {
+		return fmt.Errorf("error while deleting proposal_deposit: %s", err)
+	}
+	// Delete la proposal
+	_, err = db.SQL.Exec(`DELETE FROM proposal WHERE id = $1`, proposalID)
+	if err != nil {
+		return fmt.Errorf("error while deleting proposal: %s", err)
+	}
+	return nil
+}
