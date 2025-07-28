@@ -14,21 +14,21 @@ jobs:
       - uses: rokroskar/workflow-run-cleanup-action@master
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-    if: "!startsWith(github.ref, 'refs/tags/') && github.ref != 'refs/heads/master'"
+    if: '!startsWith(github.ref, ''refs/tags/'') && github.ref != ''refs/heads/master'''
 
   Unit-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - name: Setup Go
-        uses: actions/setup-go@v2
+        uses: actions/setup-go@v4
         with:
-          go-version: 1.23
+          go-version: '1.23'
       - name: Test & Create coverage report
         run: make install test-unit stop-docker-test
-      - name: Upload cove coverage
-        uses: codecov/codecov-action@v1.0.7
+      - name: Upload code coverage
+        uses: codecov/codecov-action@v3
         with:
           file: ./coverage.txt
