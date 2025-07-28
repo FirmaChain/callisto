@@ -169,6 +169,15 @@ func (m *Module) handleSubmitProposalEvent(tx *juno.Transaction, proposer string
 		return fmt.Errorf("error while saving proposal: %s", err)
 	}
 
+	// Update staking pool snapshot immediately for the new proposal
+	err = m.UpdateSingleProposalStakingPoolSnapshot(int64(tx.Height), proposal.Id)
+	if err != nil {
+		log.Error().Err(err).
+			Uint64("proposal_id", proposal.Id).
+			Uint64("height", tx.Height).
+			Msg("failed to update staking pool snapshot for new proposal")
+	}
+
 	// Submit proposal must have a deposit event with depositor equal to the proposer
 	return m.handleDepositEvent(tx, proposer, events)
 }
