@@ -100,6 +100,19 @@ func (m *Module) UpdateProposalStakingPoolSnapshot(height int64, proposalID uint
 	)
 }
 
+// UpdateSingleProposalStakingPoolSnapshot updates the staking pool snapshot for a single proposal
+// This is an optimized version of UpdateProposalStakingPoolSnapshot for handling newly created proposals
+func (m *Module) UpdateSingleProposalStakingPoolSnapshot(height int64, proposalID uint64) error {
+	pool, err := m.stakingModule.GetStakingPoolSnapshot(height)
+	if err != nil {
+		return fmt.Errorf("error while getting staking pool: %s", err)
+	}
+
+	return m.db.SaveProposalStakingPoolSnapshot(
+		types.NewProposalStakingPoolSnapshot(proposalID, pool),
+	)
+}
+
 // updateDeletedProposalStatus updates the proposal having the given id by setting its status
 // to the one that represents a deleted proposal
 func (m *Module) updateDeletedProposalStatus(id uint64) error {
