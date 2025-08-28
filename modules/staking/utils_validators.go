@@ -261,7 +261,7 @@ func (m *Module) UpdateValidatorStatuses() error {
 		return fmt.Errorf("error while getting latest block height from db: %s", err)
 	}
 
-	validators, _, err := m.GetValidatorsWithStatus(block.Height, stakingtypes.Bonded.String())
+	validators, _, err := m.GetValidatorsWithStatus(block.Height, "")
 	if err != nil {
 		return fmt.Errorf("error while getting validators with bonded status: %s", err)
 	}
