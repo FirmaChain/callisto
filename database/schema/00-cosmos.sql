@@ -100,11 +100,11 @@ CREATE INDEX message_involved_accounts_index ON message USING GIN(involved_accou
  * This function is used to find all the utils that involve any of the given addresses and have
  * type that is one of the specified types.
  */
-CREATE FUNCTION public.messages_by_address(
-p_addresses text[],
-p_types text[] DEFAULT NULL::text[],
-p_limit bigint DEFAULT 100,
-p_offset bigint DEFAULT 0)
+CREATE FUNCTION messages_by_address(
+addresses TEXT[],
+types TEXT[] DEFAULT NULL::TEXT[],
+"limit" BIGINT DEFAULT 100,
+"offset" BIGINT DEFAULT 0)
  RETURNS SETOF message
  LANGUAGE plpgsql
  STABLE
@@ -112,23 +112,23 @@ AS $function$
 DECLARE
     p regclass;
     current_count bigint := 0;
-    current_offset bigint := p_offset;
+    current_offset bigint := "offset";
     partition_result_count bigint;
     has_match boolean;
     type_condition text;
 BEGIN
     -- Check Type Condition
-    IF p_types IS NULL OR array_length(p_types, 1) IS NULL OR array_length(p_types, 1) = 0 THEN
+    IF types IS NULL OR array_length(types, 1) IS NULL OR array_length(types, 1) = 0 THEN
         type_condition := 'TRUE';
     ELSE
         type_condition := format('type = ANY(ARRAY[%s])',
-            array_to_string(array(select quote_literal(t) from unnest(p_types) as t), ','));
+            array_to_string(array(select quote_literal(t) from unnest(types) as t), ','));
     END IF;
 
     FOR p IN
         SELECT inhrelid
         FROM pg_inherits
-        WHERE inhparent = 'public.message'::regclass
+        WHERE inhparent = 'message'::regclass
         ORDER BY inhrelid DESC
     LOOP
         -- Check EXISTS
@@ -140,7 +140,7 @@ BEGIN
             )', p, type_condition
         )
         INTO has_match
-        USING p_addresses;
+        USING addresses;
 
         IF has_match THEN
             -- Check Counts
@@ -150,7 +150,7 @@ BEGIN
                 p, type_condition
             )
             INTO partition_result_count
-            USING p_addresses;
+            USING addresses;
 
             -- Process offset
             IF current_offset > 0 THEN
@@ -166,9 +166,9 @@ BEGIN
                         LIMIT $2 OFFSET $3',
                         p, type_condition
                     )
-                    USING p_addresses, p_limit - current_count, current_offset;
+                    USING addresses, "limit" - current_count, current_offset;
 
-                    current_count := current_count + LEAST(partition_result_count - current_offset, p_limit - current_count);
+                    current_count := current_count + LEAST(partition_result_count - current_offset, "limit" - current_count);
                     current_offset := 0;
                 END IF;
             ELSE
@@ -180,12 +180,12 @@ BEGIN
                     LIMIT $2',
                     p, type_condition
                 )
-                USING p_addresses, p_limit - current_count;
+                USING addresses, "limit" - current_count;
 
-                current_count := current_count + LEAST(partition_result_count, p_limit - current_count);
+                current_count := current_count + LEAST(partition_result_count, "limit" - current_count);
             END IF;
 
-            IF current_count >= p_limit THEN
+            IF current_count >= "limit" THEN
                 EXIT;
             END IF;
         END IF;
