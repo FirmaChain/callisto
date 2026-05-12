@@ -31,5 +31,5 @@ func NewModule(
 
 // Name implements modules.Module
 func (m *Module) Name() string {
-	return "daily refetch"
+	return "daily_refetch"
 }
