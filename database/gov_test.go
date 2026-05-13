@@ -201,7 +201,7 @@ func (suite *DbTestSuite) TestBigDipperDb_SaveProposals() {
 			"Proposal Description 2",
 			"Proposal Metadata 2",
 			"[]",
-			"cosmos.gov.v1.MsgUpdateParams",
+			"",
 			time.Date(2020, 1, 2, 00, 00, 00, 000, time.UTC),
 			time.Date(2020, 1, 2, 01, 00, 00, 000, time.UTC),
 			testutils.NewTimePointer(time.Date(2020, 1, 2, 02, 00, 00, 000, time.UTC)),

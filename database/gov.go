@@ -111,7 +111,7 @@ INSERT INTO proposal(
 		accounts = append(accounts, types.NewAccount(proposal.Proposer))
 
 		// Prepare the proposal query
-		vi := i * 11
+		vi := i * 12
 		proposalsQuery += fmt.Sprintf("($%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d,$%d),",
 			vi+1, vi+2, vi+3, vi+4, vi+5, vi+6, vi+7, vi+8, vi+9, vi+10, vi+11, vi+12)
 		var proposalType string
@@ -130,7 +130,7 @@ INSERT INTO proposal(
 					return fmt.Errorf("error unmarshalling proposal msg for type extraction: %s", err)
 				}
 				if t, ok := msgMap["@type"].(string); ok {
-					proposalType = t
+					proposalType = strings.TrimPrefix(t, "/")
 				} else {
 					proposalType = ""
 				}
