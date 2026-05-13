@@ -13,6 +13,7 @@ CREATE TABLE proposal
     description       TEXT      NOT NULL,
     metadata          TEXT      NOT NULL,
     content           JSONB     NOT NULL DEFAULT '[]'::JSONB,
+    proposal_type     TEXT      NOT NULL DEFAULT '',
     submit_time       TIMESTAMP NOT NULL,
     deposit_end_time  TIMESTAMP,
     voting_start_time TIMESTAMP,
