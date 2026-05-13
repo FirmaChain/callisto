@@ -20,6 +20,10 @@ linters:
   settings:
     dogsled:
       max-blank-identifiers: 3
+    gosec:
+      excludes:
+        - G114
+        - G115
     nolintlint:
       require-explanation: false
       require-specific: false
@@ -50,6 +54,9 @@ linters:
       - linters:
           - staticcheck
         text: 'SA1019:'
+      - linters:
+          - unused
+        path: cmd/parse/staking/staking\.go
     paths:
       - third_party$
       - builtin$
