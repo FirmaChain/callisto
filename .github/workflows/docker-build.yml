@@ -28,9 +28,9 @@ jobs:
           CHAIN_NAME="${{env.CHAIN_NAME}}"
           VERSION="${{env.GITHUB_VERSION}}"
           TAGS="${DOCKER_IMAGE}:${CHAIN_NAME}-${VERSION}"
-          echo ::set-output name=version::${VERSION}
-          echo ::set-output name=tags::${TAGS}
-          echo ::set-output name=created::$(date -u +'%Y-%m-%dT%H:%M:%SZ')
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "tags=${TAGS}" >> $GITHUB_OUTPUT
+          echo "created=$(date -u +'%Y-%m-%dT%H:%M:%SZ')" >> $GITHUB_OUTPUT
 
       - name: Determine Dockerfile to use 🔍
         run: |
