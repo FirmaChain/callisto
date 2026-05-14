@@ -101,17 +101,97 @@ CREATE INDEX message_involved_accounts_index ON message USING GIN(involved_accou
  * type that is one of the specified types.
  */
 CREATE FUNCTION messages_by_address(
-    addresses TEXT[],
-    types TEXT[],
-    "limit" BIGINT = 100,
-    "offset" BIGINT = 0)
-    RETURNS SETOF message AS
-$$
-SELECT * FROM message
-WHERE (cardinality(types) = 0 OR type = ANY (types))
-  AND addresses && involved_accounts_addresses
-ORDER BY height DESC LIMIT "limit" OFFSET "offset"
-$$ LANGUAGE sql STABLE;
+addresses TEXT[],
+types TEXT[] DEFAULT NULL::TEXT[],
+"limit" BIGINT DEFAULT 100,
+"offset" BIGINT DEFAULT 0)
+ RETURNS SETOF message
+ LANGUAGE plpgsql
+ STABLE
+AS $function$
+DECLARE
+    p regclass;
+    current_count bigint := 0;
+    current_offset bigint := "offset";
+    partition_result_count bigint;
+    has_match boolean;
+    type_condition text;
+BEGIN
+    -- Check Type Condition
+    IF types IS NULL OR array_length(types, 1) IS NULL OR array_length(types, 1) = 0 THEN
+        type_condition := 'TRUE';
+    ELSE
+        type_condition := format('type = ANY(ARRAY[%s])',
+            array_to_string(array(select quote_literal(t) from unnest(types) as t), ','));
+    END IF;
+
+    FOR p IN
+        SELECT inhrelid
+        FROM pg_inherits
+        WHERE inhparent = 'message'::regclass
+        ORDER BY inhrelid DESC
+    LOOP
+        -- Check EXISTS
+        EXECUTE format(
+            'SELECT EXISTS (
+                SELECT 1 FROM %s
+                WHERE %s AND involved_accounts_addresses && $1
+                LIMIT 1
+            )', p, type_condition
+        )
+        INTO has_match
+        USING addresses;
+
+        IF has_match THEN
+            -- Check Counts
+            EXECUTE format(
+                'SELECT count(*) FROM %s
+                WHERE %s AND involved_accounts_addresses && $1',
+                p, type_condition
+            )
+            INTO partition_result_count
+            USING addresses;
+
+            -- Process offset
+            IF current_offset > 0 THEN
+                IF current_offset >= partition_result_count THEN
+                    current_offset := current_offset - partition_result_count;
+                    CONTINUE;
+                ELSE
+                    RETURN QUERY
+                    EXECUTE format(
+                        'SELECT * FROM %s
+                        WHERE %s AND involved_accounts_addresses && $1
+                        ORDER BY height DESC
+                        LIMIT $2 OFFSET $3',
+                        p, type_condition
+                    )
+                    USING addresses, "limit" - current_count, current_offset;
+
+                    current_count := current_count + LEAST(partition_result_count - current_offset, "limit" - current_count);
+                    current_offset := 0;
+                END IF;
+            ELSE
+                RETURN QUERY
+                EXECUTE format(
+                    'SELECT * FROM %s
+                    WHERE %s AND involved_accounts_addresses && $1
+                    ORDER BY height DESC
+                    LIMIT $2',
+                    p, type_condition
+                )
+                USING addresses, "limit" - current_count;
+
+                current_count := current_count + LEAST(partition_result_count, "limit" - current_count);
+            END IF;
+
+            IF current_count >= "limit" THEN
+                EXIT;
+            END IF;
+        END IF;
+    END LOOP;
+END;
+$function$
 
 CREATE FUNCTION messages_by_type(
   types text [],
